@@ -60,6 +60,10 @@ Security Lake Integration パラメータ例
 
 以上で Security Lake のログ取り込み設定は完了です
 
+### AWS WAF のログ
+
+Security Lake の AWS WAFv2 ログ (OCSF 4002 HTTP Activity) は `log-ocsf-network-*` に入ります。HTTP メソッド、URL、ステータスコード、ルール名は ECS の `http.*`、`url.*`、`rule.*` にも入ります。
+
 ### カスタムソース
 
 Security Lake の S3 バケットに [カスタムソースからデータを配置](https://docs.aws.amazon.com/ja_jp/security-lake/latest/userguide/custom-sources.html)できます。SIEM on OpenSearch で取り込むことはできますが、想定しているファイル名と一致しない場合は、user.ini に追加の設定が必要です

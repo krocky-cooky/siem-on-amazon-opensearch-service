@@ -60,6 +60,10 @@ Immediately after configuration, log ingestion may fail, but will succeed once a
 
 This completes the log ingestion configuration for Security Lake
 
+### AWS WAF logs
+
+AWS WAFv2 logs from Security Lake (OCSF 4002 HTTP Activity) are stored in `log-ocsf-network-*`. The HTTP method, URL, status code and rule name are also stored in the ECS fields `http.*`, `url.*` and `rule.*`.
+
 ### Custom Sources
 
 You can [collect data from custom sources](https://docs.aws.amazon.com/security-lake/latest/userguide/custom-sources.html) in Security Lake's S3 buckets. Although it can be imported into SIEM on OpenSearch, additional settings are required in user.ini if the file name does not match the expected one

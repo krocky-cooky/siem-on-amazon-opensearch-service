@@ -561,6 +561,30 @@ def get_logtype_from_s3key(s3key, logtype_s3key_dict):
     return 'unknown'
 
 
+def fix_logtype_for_security_lake(logtype, s3bucket, s3key):
+    """Security Lake v2 (Apache Iceberg) data file names are not always
+    32 hex chars + .gz.parquet. Treat parquet files in the Security Lake
+    bucket as securitylake if no log type matched.
+
+    >>> fix_logtype_for_security_lake(
+    ...     'unknown', 'aws-security-data-lake-us-east-1-xxx',
+    ...     'aws/EKS_AUDIT/2.0/data/00000-0-abc.parquet')
+    'securitylake'
+    >>> fix_logtype_for_security_lake(
+    ...     'unknown', 'aws-security-data-lake-us-east-1-xxx',
+    ...     'aws/EKS_AUDIT/2.0/metadata/snap-1.avro')
+    'unknown'
+    >>> fix_logtype_for_security_lake(
+    ...     'unknown', 'my-log-bucket', 'x/data/00000-0-abc.parquet')
+    'unknown'
+    """
+    if (logtype == 'unknown'
+            and s3bucket.startswith('aws-security-data-lake-')
+            and s3key.endswith('.parquet')):
+        return 'securitylake'
+    return logtype
+
+
 def sqs_queue(queue_url):
     if not queue_url:
         return None

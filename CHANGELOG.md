@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for Security Hub findings exported to S3 in JSON (OCSF). The new es-loader option json_delimiter_optional reads one finding per line, a JSON array, or an object with findings #495
 - Added the dashboard "Security Hub (OCSF)" for log-ocsf-securityhub-* #495
 - Added OCSF 1.1.0 fields of Vulnerability, Compliance and Detection Findings (finding_info.\*, compliance.\*, remediation.\*, evidences, api.request.data, api.response.data) to the OCSF index template #495
+- Added ECS mapping of AWS WAFv2 logs from Security Lake (OCSF 4002 HTTP Activity). The HTTP method, URL, status code and rule name are stored in http.\*, url.\* and rule.\*, and the OCSF fields action, firewall_rule, http_response and http_status are added to the index template #496
 
 ### Changed
 - Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495
@@ -24,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed the OCSF parser raising ValueError when category_uid is empty. It is now derived from class_uid #495
+- Fixed Security Lake v2 (Apache Iceberg) data files not being loaded because their file names did not match s3_key. Parquet files in aws-security-data-lake-\* buckets are now treated as Security Lake logs and Iceberg metadata files are ignored #496
+- Fixed EKS audit logs from Security Lake not being loaded because of mapping conflicts of free-form api.request.data / api.response.data #496
 
 ## [2.10.6] - 2026-08-17
 ### Changed

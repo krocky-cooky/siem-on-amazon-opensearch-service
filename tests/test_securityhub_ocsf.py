@@ -28,6 +28,27 @@ class TestRouting:
         assert logconfig['s3_key_ignored'].search(OCSF_KEY)
         assert not logconfig['s3_key_ignored'].search(ASFF_KEY)
 
+    def test_security_lake_v1_key(self, logtype_s3key_dict):
+        key = ('aws/CLOUD_TRAIL_MGMT/1.0/region=us-east-1/'
+               'accountId=111122223333/eventHour=2026100100/'
+               '0123456789abcdef0123456789abcdef.gz.parquet')
+        assert utils.get_logtype_from_s3key(
+            key, logtype_s3key_dict) == 'securitylake'
+
+    def test_security_lake_v2_iceberg_data_file(self, logtype_s3key_dict):
+        key = ('aws/EKS_AUDIT/2.0/data/region=us-east-1/'
+               '00000-0-6f1c2d3e-0001.parquet')
+        logtype = utils.get_logtype_from_s3key(key, logtype_s3key_dict)
+        logtype = utils.fix_logtype_for_security_lake(
+            logtype, 'aws-security-data-lake-us-east-1-abc', key)
+        assert logtype == 'securitylake'
+
+    def test_security_lake_v2_metadata_is_ignored(self, create_logconfig):
+        logconfig = create_logconfig('securitylake')
+        key = ('ext/SecurityLake/aws/EKS_AUDIT/2.0/metadata/'
+               '00001-abc.metadata.json')
+        assert logconfig['s3_key_ignored'].search(key)
+
 
 class TestSecurityHubOcsfEndToEnd:
     def test_findings_imported_v2(self, parse_json_log):
