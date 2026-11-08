@@ -504,6 +504,7 @@ The initial value of s3_key is determined by the default output path and file na
 * ALB: `elasticloadbalancing_.*T\d{4}Z_\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}_\w*\.log\.gz$$`
 * NLB: `elasticloadbalancing_.*T\d{4}Z_[0-9a-z]{8}\.log\.gz$$`
 * CLB: `elasticloadbalancing_.*T\d{4}Z_\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}_\w*\.log$$`
+* ALB connection logs (mTLS): `/conn_log_\d{12}_elasticloadbalancing_.*\.log\.gz$$`. The index is `log-aws-alb-connection-*`. Turn on [**Connection logs**] of the ALB and choose the same S3 bucket as the access logs
 
 1. Log in to the AWS Management Console
 1. Navigate to the [Amazon EC2 console](https://console.aws.amazon.com/ec2/home?)

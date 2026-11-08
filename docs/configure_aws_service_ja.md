@@ -520,6 +520,7 @@ s3_key の初期値はデフォルトの出力パスとファイル名を正規�
 * ALB: `elasticloadbalancing_.*T\d{4}Z_\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}_\w*\.log\.gz$$`
 * NLB: `elasticloadbalancing_.*T\d{4}Z_[0-9a-z]{8}\.log\.gz$$`
 * CLB: `elasticloadbalancing_.*T\d{4}Z_\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}_\w*\.log$$`
+* ALB の接続ログ (mTLS): `/conn_log_\d{12}_elasticloadbalancing_.*\.log\.gz$$`。インデックスは `log-aws-alb-connection-*` です。ALB の [**接続ログ**] を有効にし、アクセスログと同じ S3 バケットを指定します
 
 1. [EC2 コンソール](https://console.aws.amazon.com/ec2/home?) に移動します
 1. 画面左メニューの [**ロードバランサー**] を選択 => ログ取得の対象ロードバランサーの [**チェックボックスを選択**] します

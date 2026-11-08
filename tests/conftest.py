@@ -94,3 +94,29 @@ def parse_json_log(create_logconfig):
                  'doc': json.loads(parser.json)})
         return results
     return _parse
+
+
+@pytest.fixture
+def parse_text_log(create_logconfig):
+    """parse raw text log with log_pattern (e.g. ALB access logs)"""
+    from siem.fileformat_text import FileFormatText
+
+    def _parse(raw_text, logtype, s3key):
+        logconfig = create_logconfig(logtype)
+        fileformat = FileFormatText(io.StringIO(raw_text), logconfig, logtype)
+        logfile = SimpleNamespace(
+            logtype=logtype, s3key=s3key, s3bucket='test-bucket',
+            file_format='text', accountid='111122223333',
+            region='us-east-1', via_firelens=False, error_logs_count=0)
+        sf_module = utils.load_sf_module(logfile, logconfig, [])
+        results = []
+        for lograw, logdict, logmeta in fileformat.extract_log(1, 100):
+            assert logdict != 'regex_error', lograw
+            parser = siem.LogParser(logfile, logconfig, sf_module,
+                                    _Disabled(), _Disabled(), _Disabled())
+            parser(lograw, logdict, logmeta)
+            results.append(
+                {'index': parser.indexname, 'id': parser.doc_id,
+                 'doc': json.loads(parser.json)})
+        return results
+    return _parse
