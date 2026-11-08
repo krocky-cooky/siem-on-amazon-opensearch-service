@@ -1239,7 +1239,7 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt 'AesSiemDlq1CD8439D.Arn'
         maxReceiveCount: 20
-      VisibilityTimeout: 600
+      VisibilityTimeout: 3600
     UpdateReplacePolicy: Delete
     DeletionPolicy: Delete
   LambdaEsLoaderServiceRoleFFD43869:
@@ -2464,6 +2464,7 @@ Resources:
   EventSourceMappingForCT230540116:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
+      BatchSize: 1
       EventSourceArn: !Ref 'SecurityLakeSubscriberSqs'
       FunctionName: !Ref 'LambdaEsLoader4B1E2DD9'
       FunctionResponseTypes:

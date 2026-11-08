@@ -313,7 +313,6 @@ def check_es_results(results, total_count):
 
 def bulkloads_into_opensearch(es_entries, collected_metrics):
     global es_conn
-    global docid_set
     output_size, total_output_size = 0, 0
     total_count, success_count, error_count, es_response_time = 0, 0, 0, 0
     results = False
@@ -336,14 +335,18 @@ def bulkloads_into_opensearch(es_entries, collected_metrics):
         if output_size > 6000000:
             total_output_size += output_size
             try:
-                results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+                results = es_conn.bulk(
+                    body=putdata_list,
+                    params={"filter_path": ",".join(filter_path)})
             except (AuthorizationException, AuthenticationException) as err:
                 logger.warning(
                     'AuthN or AuthZ Exception raised due to SigV4 issue. '
                     f'http_compress has been disabled. {err}')
                 es_conn = utils.create_es_conn(
                     awsauth, ES_HOSTNAME, http_compress=False)
-                results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+                results = es_conn.bulk(
+                    body=putdata_list,
+                    params={"filter_path": ",".join(filter_path)})
             es_took, success, error, error_reasons, retry = check_es_results(
                 results, total_count)
             success_count += success
@@ -359,14 +362,18 @@ def bulkloads_into_opensearch(es_entries, collected_metrics):
     if output_size > 0:
         total_output_size += output_size
         try:
-            results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+            results = es_conn.bulk(
+                body=putdata_list,
+                params={"filter_path": ",".join(filter_path)})
         except (AuthorizationException, AuthenticationException) as err:
             logger.warning(
                 'AuthN or AuthZ Exception raised due to SigV4 issue. '
                 f'http_compress has been disabled. {err}')
             es_conn = utils.create_es_conn(
                 awsauth, ES_HOSTNAME, http_compress=False)
-            results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+            results = es_conn.bulk(
+                body=putdata_list,
+                params={"filter_path": ",".join(filter_path)})
         # logger.debug(results)
         es_took, success, error, error_reasons, retry = check_es_results(
             results, total_count)
@@ -535,8 +542,8 @@ def main(event, context):
                     recs = json.loads(record['body'])
                     if 'Records' in recs:
                         # Control Tower
-                        for record in recs['Records']:
-                            process_record(record)
+                        for s3_record in recs['Records']:
+                            process_record(s3_record)
                     else:
                         # from sqs-splitted-log, Security Lake(via EventBridge)
                         process_record(recs)
@@ -547,8 +554,8 @@ def main(event, context):
             # s3 notification from SNS
             for record in event['Records']:
                 recs = json.loads(record['Sns']['Message'])
-                for record in recs['Records']:
-                    process_record(record)
+                for s3_record in recs['Records']:
+                    process_record(s3_record)
         else:
             # local execution
             for record in event['Records']:

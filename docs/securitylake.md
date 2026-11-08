@@ -32,7 +32,9 @@ Ignore Security Lake related parameters when running CDK / CloudFormation.
         * Select `All log and event sources` or make sure that the custom log sources you want to ingest are selected under `Specific log and event sources`
 1. **[Required]** Change the SQS of the created subscriber
     * Target SQS: AmazonSecurityLake-XXXXXXXX-XXXXXX-XXXXXX-XXXXXXXX-Main-Queue
-    * Change visibility timeout from 5 minutes to `10 minutes`.
+    * Change the visibility timeout from 5 minutes to `60 minutes` (recommended). It must be at least `10 minutes`
+    * The es-loader timeout is 10 minutes. Lambda rejects an event source mapping when the queue visibility timeout is shorter than the function timeout, so with the default of 5 minutes the CloudFormation stack update fails with `Queue visibility timeout: 300 seconds is less than Function timeout: 600 seconds`
+    * Lambda recommends a visibility timeout of at least six times the function timeout. A shorter value lets a message become visible again while a large Parquet object is still being loaded, and the object is then loaded twice. [Doc](https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html)
 
 Check the subscriber created.
 

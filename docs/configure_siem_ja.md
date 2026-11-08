@@ -639,7 +639,7 @@ es-loader が S3 バケットのログを取得できるように、ログが保
 1. SQS キューの作成
     * 以下は必須項目です。他の値は環境に合わせて入力して下さい。
     * 標準タイプ
-    * 可視性タイムアウト: 600秒
+    * 可視性タイムアウト: 3600秒 (推奨。es-loader のタイムアウト 600 秒の 6 倍)。最低でも 600 秒以上にしてください。[Doc](https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/services-sqs-configure.html)
 1. 以下のポリシー例を参考に SQS のアクセスポリシーを修正
 
     ```json
