@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a GitHub Actions workflow that runs pytest, flake8 on changed Python files, a version string check and cfn-lint on every pull request #489
 - Added deployment/bump_version.py. `python3 deployment/bump_version.py <new version>` updates the version in every file, and `--check` fails when a file has a different version #489
 
+### Fixed
+- Fixed CloudTrail events being rejected when requestParameters.startTime or endTime is in ISO 8601 (for example LookupEvents and RDS DescribeEvents). The index template now also accepts ISO 8601. The change applies to indices created after the update #492
+
 ## [2.10.6] - 2026-08-17
 ### Changed
 - Changed the minimum supported version of Amazon OpenSearch Service to OpenSearch 2.11. The GuardDuty index template now uses the flat_object field type that requires OpenSearch 2.7 or later, and OpenSearch 2.3 - 2.9 reached the end of standard support on November 7, 2025. Elasticsearch 7.10 and OpenSearch 1.x are no longer supported #482
