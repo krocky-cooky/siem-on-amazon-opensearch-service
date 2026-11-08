@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added unit tests for es-loader under tests/. They run without OpenSearch, check that every log type in aws.ini builds its logconfig and imports its sf_ module, and can be run from a fresh venv with `pip install -r tests/requirements.txt && pytest tests` #489
 - Added a GitHub Actions workflow that runs pytest, flake8 on changed Python files, a version string check and cfn-lint on every pull request #489
 - Added deployment/bump_version.py. `python3 deployment/bump_version.py <new version>` updates the version in every file, and `--check` fails when a file has a different version #489
+- Added the GuardDuty field attack_sequence.\*. Actors, endpoints, resources, signals and indicators of attack sequence findings (Extended Threat Detection) are copied from service.detection.sequence, and endpoint IPs, domains and actor names are added to related.ip, related.hosts and related.user #498
+- Added ECS fields for GuardDuty Runtime Monitoring and RDS Protection findings: container.\*, orchestrator.cluster.name and related.user (RDS database user) #498
 
 ## [2.10.6] - 2026-08-17
 ### Changed

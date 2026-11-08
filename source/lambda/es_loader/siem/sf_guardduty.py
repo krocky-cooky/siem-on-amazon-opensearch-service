@@ -26,7 +26,76 @@ GD_TYPE_KEYS = ('ThreatPurpose', 'ResourceTypeAffected', 'ThreatFamilyName',
                 'DetectionMechanism', 'Artifact')
 
 
+def _as_list(value):
+    if isinstance(value, list):
+        return value
+    return [] if value is None else [value]
+
+
+def _unique(values):
+    result = []
+    for value in values:
+        if value not in (None, '') and value not in result:
+            result.append(value)
+    return result
+
+
+def _add_related(logdata, key, values):
+    related = logdata.setdefault('related', {})
+    related[key] = _unique(_as_list(related.get(key)) + values)
+    if not related[key]:
+        del related[key]
+
+
+def expand_attack_sequence(logdata):
+    """copy the key parts of an attack sequence to searchable fields.
+
+    service.detection.sequence is stored as flat_object, so actors,
+    endpoints and signals are copied to attack_sequence.* and related.*.
+    https://docs.aws.amazon.com/guardduty/latest/APIReference/API_Sequence.html
+    """
+    try:
+        sequence = logdata['service']['detection']['sequence']
+    except (KeyError, TypeError):
+        return logdata
+    if not isinstance(sequence, dict):
+        return logdata
+
+    def items(key):
+        return [x for x in _as_list(sequence.get(key)) if isinstance(x, dict)]
+
+    actors, endpoints = items('actors'), items('endpoints')
+    signals, resources = items('signals'), items('resources')
+    indicators = items('sequenceIndicators')
+
+    users = [(a.get('user') or {}).get('name') for a in actors]
+    ips = [e.get('ip') for e in endpoints]
+    domains = [e.get('domain') for e in endpoints]
+
+    summary = {
+        'uid': sequence.get('uid'),
+        'actor_ids': _unique(a.get('id') for a in actors),
+        'endpoint_ips': _unique(ips),
+        'endpoint_domains': _unique(domains),
+        'resource_uids': _unique(r.get('uid') for r in resources),
+        'signal_names': _unique(s.get('name') for s in signals),
+        'signal_types': _unique(s.get('type') for s in signals),
+        'signal_count': len(signals),
+        'indicators': [{'key': i.get('key'),
+                        'values': _unique(_as_list(i.get('values')))}
+                       for i in indicators if i.get('key')],
+    }
+    logdata['attack_sequence'] = {
+        k: v for k, v in summary.items() if v not in (None, '', [])}
+
+    _add_related(logdata, 'ip', _unique(ips))
+    _add_related(logdata, 'user', _unique(users))
+    _add_related(logdata, 'hosts', _unique(domains))
+    return logdata
+
+
 def transform(logdata):
+    logdata = expand_attack_sequence(logdata)
     logdata['rule']['name'] = logdata['rule']['name'].strip().rstrip('.')
     severity = logdata['severity']
     if severity <= 3.9:
