@@ -25,6 +25,40 @@ def convert_text_into_dict(temp_value):
     return {'value': repr(temp_value)}
 
 
+def _contains_object(value):
+    if isinstance(value, dict):
+        return True
+    if isinstance(value, list):
+        return any(isinstance(v, (dict, list)) for v in value)
+    return False
+
+
+def stringify_object_value(parent, key):
+    """convert parent[key] into str only when it holds an object.
+
+    Scalars and lists of scalars are left untouched so that documents
+    which are already indexed as keyword keep the same shape.
+    """
+    try:
+        value = parent[key]
+    except (KeyError, TypeError):
+        return
+    if _contains_object(value):
+        parent[key] = str(value)
+
+
+def wrap_text_environment(container_override):
+    """environment is a list of {name, value} but may be masked as text.
+
+    e.g. "environment": "HIDDEN_DUE_TO_SECURITY_REASONS" (#430)
+    """
+    if not isinstance(container_override, dict):
+        return
+    env = container_override.get('environment')
+    if isinstance(env, str):
+        container_override['environment'] = {'value': env}
+
+
 def extract_instance_id(logdata):
     event_source = logdata.get('eventSource', '')
     event_name = logdata.get('eventName', '')
@@ -134,6 +168,29 @@ def transform(logdata):
         status = None
     if status and isinstance(status, str):
         logdata['responseElements']['status'] = {'status': status}
+
+    # https://github.com/aws-samples/siem-on-amazon-opensearch-service/issues/485
+    # filters / metrics are keyword, but some APIs send a list of objects
+    # (e.g. ssm ListDocuments: [{"key": "Owner", "values": ["Self"]}])
+    request_params = logdata.get('requestParameters')
+    if isinstance(request_params, dict):
+        stringify_object_value(request_params, 'filters')
+        stringify_object_value(request_params, 'metrics')
+
+        # https://github.com/aws-samples/siem-on-amazon-opensearch-service/issues/430
+        container_overrides = request_params.get('containerOverrides')
+        overrides = request_params.get('overrides')
+        if isinstance(overrides, dict):
+            container_overrides = [container_overrides,
+                                   overrides.get('containerOverrides')]
+        else:
+            container_overrides = [container_overrides]
+        for item in container_overrides:
+            if isinstance(item, list):
+                for container_override in item:
+                    wrap_text_environment(container_override)
+            else:
+                wrap_text_environment(item)
 
     event_source = logdata.get('eventSource', None)
     if not event_source:

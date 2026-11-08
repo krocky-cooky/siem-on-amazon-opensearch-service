@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a GitHub Actions workflow that runs pytest, flake8 on changed Python files, a version string check and cfn-lint on every pull request #489
 - Added deployment/bump_version.py. `python3 deployment/bump_version.py <new version>` updates the version in every file, and `--check` fails when a file has a different version #489
 
+### Fixed
+- Fixed CloudTrail events being rejected when requestParameters.filters or metrics holds a list of objects, or when the ECS / Batch container environment is masked as text. Only object values are converted to text; string values are unchanged #491
+- Fixed Inspector findings still being rejected because the index template did not accept the new updatedAt format. The template now accepts the legacy format, the new UTC format and ISO 8601. The change applies to indices created after the update #491
+- Fixed large AWS Config snapshots being rejected with "Limit of total fields [3000] has been exceeded". The total fields limit of the log-aws-config index is raised to 8000. The field structure is unchanged. The new limit applies to indices created after the update #491
+
 ## [2.10.6] - 2026-08-17
 ### Changed
 - Changed the minimum supported version of Amazon OpenSearch Service to OpenSearch 2.11. The GuardDuty index template now uses the flat_object field type that requires OpenSearch 2.7 or later, and OpenSearch 2.3 - 2.9 reached the end of standard support on November 7, 2025. Elasticsearch 7.10 and OpenSearch 1.x are no longer supported #482
