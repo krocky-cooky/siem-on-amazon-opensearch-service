@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added unit tests for es-loader under tests/. They run without OpenSearch, check that every log type in aws.ini builds its logconfig and imports its sf_ module, and can be run from a fresh venv with `pip install -r tests/requirements.txt && pytest tests` #489
 - Added a GitHub Actions workflow that runs pytest, flake8 on changed Python files, a version string check and cfn-lint on every pull request #489
 - Added deployment/bump_version.py. `python3 deployment/bump_version.py <new version>` updates the version in every file, and `--check` fails when a file has a different version #489
+- Added log type securityhub-ocsf for OCSF findings of the new AWS Security Hub (EventBridge detail-type "Findings Imported V2"). Findings are stored in log-ocsf-securityhub-* and mapped to ECS (source, destination, rule, event.severity, event.provider). Updated findings are kept as separate documents with an idempotent _id #495
+- Added the parameter LoadSecurityHubOcsf (default: No) and the EventBridge rule siem-securityhub-ocsf-to-firehose to the siem-log-exporter-eventbridge-events templates #495
+- Added support for Security Hub findings exported to S3 in JSON (OCSF). The new es-loader option json_delimiter_optional reads one finding per line, a JSON array, or an object with findings #495
+- Added the dashboard "Security Hub (OCSF)" for log-ocsf-securityhub-* #495
+- Added OCSF 1.1.0 fields of Vulnerability, Compliance and Detection Findings (finding_info.\*, compliance.\*, remediation.\*, evidences, api.request.data, api.response.data) to the OCSF index template #495
+
+### Changed
+- Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495
+- The OCSF parser uses OCSF 1.1.0 finding_info.modified_time / created_time as @timestamp of findings. OCSF 1.0.0 finding.\* is still supported #495
+- OCSF category 6 (Application Activity) and 7 are stored in log-ocsf-application-\* and log-ocsf-remediation-\* when category_name is missing #495
+
+### Fixed
+- Fixed the OCSF parser raising ValueError when category_uid is empty. It is now derived from class_uid #495
 
 ## [2.10.6] - 2026-08-17
 ### Changed

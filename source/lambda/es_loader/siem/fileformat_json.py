@@ -21,11 +21,32 @@ class FileFormatJson(FileFormatBase):
     def __init__(self, rawdata=None, logconfig=None, logtype=None):
         super().__init__(rawdata, logconfig, logtype)
         self.json_delimiter = logconfig['json_delimiter']
+        self.json_delimiter_optional = logconfig.get(
+            'json_delimiter_optional', False)
+
+    def _records(self, raw_event):
+        """return log records in one decoded json.
+
+        json_delimiter_optional allows a file to have a json with the
+        delimiter key, a bare record, or an array of records.
+        e.g. Security Hub export to S3 and EventBridge events
+        """
+        delimiter = self.json_delimiter
+        optional = self.json_delimiter_optional
+        if isinstance(raw_event, list):
+            if optional:
+                return [r for r in raw_event if isinstance(r, dict)]
+            return [] if delimiter else [raw_event]
+        if delimiter and (delimiter in raw_event):
+            # multiple evets in 1 json
+            return raw_event[delimiter]
+        if not delimiter or optional:
+            return [raw_event]
+        return []
 
     @property
     def log_count(self):
         decoder = json.JSONDecoder()
-        delimiter = self.json_delimiter
         count = 0
         # For ndjson
         for line in self.rawdata.readlines():
@@ -35,12 +56,7 @@ class FileFormatJson(FileFormatBase):
             while index < size:
                 raw_event, offset = decoder.raw_decode(line, index)
                 raw_event, _ = self._check_cwe_and_strip_header(raw_event)
-                if delimiter and (delimiter in raw_event):
-                    # multiple evets in 1 json
-                    for record in raw_event[delimiter]:
-                        count += 1
-                elif not delimiter:
-                    count += 1
+                count += len(self._records(raw_event))
                 search = json.decoder.WHITESPACE.search(line, offset)
                 if search is None:
                     break
@@ -49,7 +65,6 @@ class FileFormatJson(FileFormatBase):
 
     def extract_log(self, start, end, logmeta={}):
         decoder = json.JSONDecoder()
-        delimiter = self.logconfig['json_delimiter']
         count = 0
         # For ndjson
         for line in self.rawdata.readlines():
@@ -60,20 +75,11 @@ class FileFormatJson(FileFormatBase):
                 raw_event, offset = decoder.raw_decode(line, index)
                 raw_event, logmeta = self._check_cwe_and_strip_header(
                     raw_event, logmeta, need_meta=True)
-                if delimiter and (delimiter in raw_event):
-                    # multiple evets in 1 json
-                    for record in raw_event[delimiter]:
-                        count += 1
-                        if start <= count <= end:
-                            yield (json.dumps(record, ensure_ascii=False),
-                                   record, logmeta)
-                        elif count > end:
-                            break
-                elif not delimiter:
+                for record in self._records(raw_event):
                     count += 1
                     if start <= count <= end:
-                        yield (json.dumps(raw_event, ensure_ascii=False),
-                               raw_event, logmeta)
+                        yield (json.dumps(record, ensure_ascii=False),
+                               record, logmeta)
                     elif count > end:
                         break
                 search = json.decoder.WHITESPACE.search(line, offset)
@@ -104,7 +110,8 @@ class FileFormatJson(FileFormatBase):
 
     def _check_cwe_and_strip_header(
             self, dict_obj, logmeta={}, need_meta=False):
-        if "detail-type" in dict_obj and "resources" in dict_obj:
+        if (isinstance(dict_obj, dict) and "detail-type" in dict_obj
+                and "resources" in dict_obj):
             if need_meta:
                 logmeta = {'cwe_id': dict_obj['id'],
                            'cwe_source': dict_obj['source'],
