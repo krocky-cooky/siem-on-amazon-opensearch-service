@@ -44,7 +44,7 @@ SQS_SPLITTED_LOGS_URL = None
 if 'SQS_SPLITTED_LOGS_URL' in os.environ:
     SQS_SPLITTED_LOGS_URL = os.environ['SQS_SPLITTED_LOGS_URL']
 ES_HOSTNAME = utils.get_es_hostname()
-SERVICE = ES_HOSTNAME.split('.')[2]
+SERVICE = utils.parse_endpoint(ES_HOSTNAME)[1]
 AOSS_TYPE = os.getenv('AOSS_TYPE', '')
 docid_set = set()
 
@@ -313,7 +313,6 @@ def check_es_results(results, total_count):
 
 def bulkloads_into_opensearch(es_entries, collected_metrics):
     global es_conn
-    global docid_set
     output_size, total_output_size = 0, 0
     total_count, success_count, error_count, es_response_time = 0, 0, 0, 0
     results = False
@@ -336,14 +335,18 @@ def bulkloads_into_opensearch(es_entries, collected_metrics):
         if output_size > 6000000:
             total_output_size += output_size
             try:
-                results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+                results = es_conn.bulk(
+                    body=putdata_list,
+                    params={"filter_path": ",".join(filter_path)})
             except (AuthorizationException, AuthenticationException) as err:
                 logger.warning(
                     'AuthN or AuthZ Exception raised due to SigV4 issue. '
                     f'http_compress has been disabled. {err}')
                 es_conn = utils.create_es_conn(
                     awsauth, ES_HOSTNAME, http_compress=False)
-                results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+                results = es_conn.bulk(
+                    body=putdata_list,
+                    params={"filter_path": ",".join(filter_path)})
             es_took, success, error, error_reasons, retry = check_es_results(
                 results, total_count)
             success_count += success
@@ -359,14 +362,18 @@ def bulkloads_into_opensearch(es_entries, collected_metrics):
     if output_size > 0:
         total_output_size += output_size
         try:
-            results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+            results = es_conn.bulk(
+                body=putdata_list,
+                params={"filter_path": ",".join(filter_path)})
         except (AuthorizationException, AuthenticationException) as err:
             logger.warning(
                 'AuthN or AuthZ Exception raised due to SigV4 issue. '
                 f'http_compress has been disabled. {err}')
             es_conn = utils.create_es_conn(
                 awsauth, ES_HOSTNAME, http_compress=False)
-            results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+            results = es_conn.bulk(
+                body=putdata_list,
+                params={"filter_path": ",".join(filter_path)})
         # logger.debug(results)
         es_took, success, error, error_reasons, retry = check_es_results(
             results, total_count)
