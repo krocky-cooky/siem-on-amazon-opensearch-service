@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added unit tests for es-loader under tests/. They run without OpenSearch, check that every log type in aws.ini builds its logconfig and imports its sf_ module, and can be run from a fresh venv with `pip install -r tests/requirements.txt && pytest tests` #489
 - Added a GitHub Actions workflow that runs pytest, flake8 on changed Python files, a version string check and cfn-lint on every pull request #489
 - Added deployment/bump_version.py. `python3 deployment/bump_version.py <new version>` updates the version in every file, and `--check` fails when a file has a different version #489
+- Added VPC Flow Logs fields of version 5 to 9 to the index template: pkt-src/dst-aws-service, flow-direction, ECS task metadata (v7), reject-reason (v8), resource-id and encryption-status (v9). ECS task metadata is also mapped to ECS container.id and orchestrator.\*, and reject-reason to event.reason. The fields are loaded when they are in the flow log format #497
 
 ## [2.10.6] - 2026-08-17
 ### Changed
