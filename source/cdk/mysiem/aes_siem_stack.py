@@ -223,6 +223,12 @@ class MyAesSiemStack(cdk.Stack):
             aos_sg_is_associated = False
 
         ES_LOADER_TIMEOUT = 600
+        # Lambda recommends a source queue visibility timeout of at least
+        # six times the function timeout so that messages are not
+        # re-delivered while throttled or long running invocations are
+        # still processing them.
+        # https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html
+        ES_LOADER_SQS_VISIBILITY_TIMEOUT = ES_LOADER_TIMEOUT * 6
         PARTITION = region_info.Fact.find(
             self.region, region_info.FactName.PARTITION)
         if not PARTITION:
@@ -1194,7 +1200,8 @@ class MyAesSiemStack(cdk.Stack):
             data_key_reuse=cdk.Duration.hours(24),
             dead_letter_queue=aws_sqs.DeadLetterQueue(
                 max_receive_count=20, queue=sqs_aes_siem_dlq),
-            visibility_timeout=cdk.Duration.seconds(ES_LOADER_TIMEOUT),
+            visibility_timeout=cdk.Duration.seconds(
+                ES_LOADER_SQS_VISIBILITY_TIMEOUT),
             retention_period=cdk.Duration.days(14))
 
         ######################################################################
@@ -1788,6 +1795,11 @@ class MyAesSiemStack(cdk.Stack):
             self, "EventSourceMappingForCT2",
             target=lambda_es_loader,
             event_source_arn=sl_log_sqs.value_as_string,
+            # One Parquet object per invocation. With the default batch size
+            # of 10, a timeout while loading large objects returned the whole
+            # batch to the queue and the objects already loaded were loaded
+            # again (#473)
+            batch_size=1,
             report_batch_item_failures=True,
         )
         source_mapping_for_ct2.node.default_child.cfn_options.condition = (

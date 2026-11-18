@@ -10,9 +10,34 @@ __url__ = 'https://github.com/aws-samples/siem-on-amazon-opensearch-service'
 from siem import utils
 
 
+def _to_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def get_category_uid(logdata):
+    """Return OCSF category_uid. Derive it from class_uid when it is missing
+
+    >>> get_category_uid({'category_uid': 2})
+    2
+    >>> get_category_uid({'category_uid': '', 'class_uid': 3002})
+    3
+    >>> get_category_uid({})
+
+    """
+    category_uid = _to_int(logdata.get('category_uid'))
+    if category_uid is None:
+        class_uid = _to_int(logdata.get('class_uid'))
+        if class_uid:
+            category_uid = class_uid // 1000
+    return category_uid
+
+
 def transform(logdata):
     category_name = logdata.get('category_name')
-    category_uid = int(logdata.get('category_uid', ''))
+    category_uid = get_category_uid(logdata)
     if category_name:
         index_suffix = f"-{category_name.split()[0].lower()}"
         log_type = f"-{category_name.replace(' ', '-').lower()}"
