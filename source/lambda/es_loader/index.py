@@ -64,6 +64,8 @@ def extract_logfile_from_s3(record):
     if s3key and s3bucket:
         logger.structure_logs(append=True, s3_key=s3key, s3_bucket=s3bucket)
         logtype = utils.get_logtype_from_s3key(s3key, logtype_s3key_dict)
+        logtype = utils.fix_logtype_for_security_lake(
+            logtype, s3bucket, s3key)
         logconfig = create_logconfig(logtype)
         client = s3_client
 
