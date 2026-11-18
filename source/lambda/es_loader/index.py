@@ -542,8 +542,8 @@ def main(event, context):
                     recs = json.loads(record['body'])
                     if 'Records' in recs:
                         # Control Tower
-                        for record in recs['Records']:
-                            process_record(record)
+                        for s3_record in recs['Records']:
+                            process_record(s3_record)
                     else:
                         # from sqs-splitted-log, Security Lake(via EventBridge)
                         process_record(recs)
@@ -554,8 +554,8 @@ def main(event, context):
             # s3 notification from SNS
             for record in event['Records']:
                 recs = json.loads(record['Sns']['Message'])
-                for record in recs['Records']:
-                    process_record(record)
+                for s3_record in recs['Records']:
+                    process_record(s3_record)
         else:
             # local execution
             for record in event['Records']:
