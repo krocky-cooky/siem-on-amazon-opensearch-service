@@ -48,6 +48,29 @@ AWS CDK または AWS CloudFormation テンプレートにて下記の OpenSearc
 
 暗号化の鍵は [AWS 所有キー] のみ SIEM ソリューションでサポートしています
 
+### NextGen コレクション
+
+OpenSearch Serverless には Classic と NextGen の 2 つの世代があります。コンソールでコレクションを作ると、既定で NextGen になります。CDK / CloudFormation テンプレートが新規に作るコレクションは Classic です。
+
+NextGen の時系列コレクションを使う場合は、事前にご自身でコレクショングループと時系列コレクションを作成し、`DomainOrCollectionName` にそのコレクション名を入力してください。
+
+Classic との主な違い
+
+|違い|Classic|NextGen|
+|----|-------|-------|
+|エンドポイント|`<id>.<region>.aoss.amazonaws.com`|`<id>.aoss.<region>.on.aws`|
+|コレクショングループ|任意|必須|
+|OpenSearch Dashboards|コレクションごとに提供|提供されない。[OpenSearch UI](https://docs.aws.amazon.com/ja_jp/opensearch-service/latest/developerguide/application.html) を使う|
+|ドキュメント ID の指定|時系列コレクションでは不可|時系列コレクションでは不可|
+|タイムスタンプ|任意|`@timestamp` が無いドキュメントは拒否される|
+|データの保持期間|データライフサイクルポリシー|index 設定の `index.data.retention`|
+
+* SIEM は ID を付けずに書き込み、すべてのログに `@timestamp` を付けます
+* NextGen ではダッシュボードは自動でインポートされません
+* NextGen で VPC 内からアクセスするには標準の VPC エンドポイント (`com.amazonaws.<region>.aoss-data`) を使います。パラメーター `VpcEndpointId` はまだ対応していないため、パブリックのコレクションをご利用ください
+
+詳細は [コレクションの作成](https://docs.aws.amazon.com/ja_jp/opensearch-service/latest/developerguide/serverless-create.html) と [コレクションエンドポイント](https://docs.aws.amazon.com/ja_jp/opensearch-service/latest/developerguide/serverless-collection-endpoints.html) をご参照ください
+
 ## SIEM のデプロイ
 
 1. AWS CDK または CloudFormation テンプレートを実行する

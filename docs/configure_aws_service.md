@@ -246,6 +246,26 @@ Configuring EventBridge
     * Choose any value for the rest
     * Choose [**Create**] to complete the configuration
 
+#### OCSF findings of new Security Hub (Findings Imported V2)
+
+The new Security Hub sends findings to EventBridge in OCSF 1.1.0 (detail-type: `Findings Imported V2`). They are loaded as log type `securityhub-ocsf`, separately from the ASFF findings of Security Hub CSPM (detail-type: `Security Hub Findings - Imported`).
+
+* Initial value of s3_key: `Findings_Imported_V2` or `SecurityHub-OCSF/` (specified in the Firehose output path)
+* Index: `log-ocsf-securityhub-*` (the OCSF index template `log-ocsf-*` is applied)
+* CloudFormation: set the parameter **LoadSecurityHubOcsf** of the `siem-log-exporter-eventbridge-events` template to `Yes`. The default is `No` to avoid duplicated findings for existing users
+* Manual configuration: choose `Findings Imported V2` as the event type of the EventBridge rule and set the Firehose S3 prefix to [**AWSLogs/123456789012/SecurityHub-OCSF/[region]/**]. Do not use the same prefix as `SecurityHub/` for ASFF
+* The new Security Hub also sends findings of CSPM and GuardDuty in OCSF. If both ASFF and OCSF are enabled, the same finding is stored in both `log-aws-securityhub-*` and `log-ocsf-securityhub-*`
+
+#### Security Hub findings exported to S3 (JSON / OCSF)
+
+You can export findings to S3 from the findings pages of the Security Hub console ([documentation](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-findings-export.html)). Files in JSON (OCSF) are loaded as log type `securityhub-ocsf`.
+
+* Export location: the SIEM log bucket `aes-siem-[AWS Account ID]-log`
+* Prefix: include [**AWSLogs/123456789012/SecurityHub-OCSF/**]
+* Format: choose **JSON (OCSF)**. CSV is not supported
+* KMS key: choose the key that encrypts the SIEM log bucket, and allow Security Hub to use it in the key policy
+* A finding that is also loaded via EventBridge has the same document ID, so it is not duplicated
+
 ### AWS Network Firewall
 
 ![NFW to S3](images/nfw-to-s3.jpg)

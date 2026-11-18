@@ -384,6 +384,15 @@ class EventBridgeEventsExporterStack(MyStack):
             description=('Do you enable to load SecurityHub events to '
                          'OpenSearch Service?'),
             allowed_values=['Yes', 'No'], default='Yes')
+        # New Security Hub (OCSF findings, detail-type "Findings Imported V2")
+        # Default is No to avoid duplicated alerts with ASFF findings of
+        # Security Hub CSPM for existing users.
+        load_security_hub_ocsf = cdk.CfnParameter(
+            self, 'LoadSecurityHubOcsf',
+            description=('Do you enable to load new Security Hub findings '
+                         '(OCSF, Findings Imported V2) to OpenSearch '
+                         'Service?'),
+            allowed_values=['Yes', 'No'], default='No')
         load_config_rules = cdk.CfnParameter(
             self, 'LoadConfigRules',
             description=('Do you enable to load Config Rules events to '
@@ -406,6 +415,7 @@ class EventBridgeEventsExporterStack(MyStack):
                     {'Label': {'default': 'Events'},
                      'Parameters': [load_inspector.logical_id,
                                     load_security_hub.logical_id,
+                                    load_security_hub_ocsf.logical_id,
                                     load_config_rules.logical_id]}]}}
 
         kdf_to_s3 = aws_kinesisfirehose.CfnDeliveryStream(
@@ -482,6 +492,21 @@ class EventBridgeEventsExporterStack(MyStack):
                 detail_type=["Security Hub Findings - Imported"]))
         rule_security_hub.node.default_child.cfn_options.condition = is_security_hub
         rule_security_hub.add_target(kdf_to_s3_target)
+
+        is_security_hub_ocsf = cdk.CfnCondition(
+            self, "IsSecurityHubOcsf",
+            expression=cdk.Fn.condition_equals(
+                load_security_hub_ocsf.value_as_string, "Yes"))
+        rule_security_hub_ocsf = aws_events.Rule(
+            self, "RuleSecurityHubOcsf",
+            rule_name='siem-securityhub-ocsf-to-firehose',
+            description=f'SIEM on OpenSearch Service v{__version__}:',
+            event_pattern=aws_events.EventPattern(
+                source=["aws.securityhub"],
+                detail_type=["Findings Imported V2"]))
+        rule_security_hub_ocsf.node.default_child.cfn_options.condition = (
+            is_security_hub_ocsf)
+        rule_security_hub_ocsf.add_target(kdf_to_s3_target)
 
         is_config_rules = cdk.CfnCondition(
             self, "IsConfigRules",

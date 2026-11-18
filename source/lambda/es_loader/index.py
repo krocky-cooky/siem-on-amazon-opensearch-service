@@ -44,7 +44,7 @@ SQS_SPLITTED_LOGS_URL = None
 if 'SQS_SPLITTED_LOGS_URL' in os.environ:
     SQS_SPLITTED_LOGS_URL = os.environ['SQS_SPLITTED_LOGS_URL']
 ES_HOSTNAME = utils.get_es_hostname()
-SERVICE = ES_HOSTNAME.split('.')[2]
+SERVICE = utils.parse_endpoint(ES_HOSTNAME)[1]
 AOSS_TYPE = os.getenv('AOSS_TYPE', '')
 docid_set = set()
 
@@ -64,6 +64,8 @@ def extract_logfile_from_s3(record):
     if s3key and s3bucket:
         logger.structure_logs(append=True, s3_key=s3key, s3_bucket=s3bucket)
         logtype = utils.get_logtype_from_s3key(s3key, logtype_s3key_dict)
+        logtype = utils.fix_logtype_for_security_lake(
+            logtype, s3bucket, s3key)
         logconfig = create_logconfig(logtype)
         client = s3_client
 
@@ -150,7 +152,7 @@ def create_logconfig(logtype):
     type_int = ['max_log_count', 'text_header_line_number',
                 'ignore_header_line_number']
     type_bool = ['via_cwl', 'via_firelens', 'ignore_container_stderr',
-                 'timestamp_nano']
+                 'timestamp_nano', 'json_delimiter_optional']
     type_list = ['base.tags', 'clientip_xff', 'container.image.tag',
                  'dns.answers',
                  'dns.header_flags', 'dns.resolved_ip', 'dns.type',
@@ -313,7 +315,6 @@ def check_es_results(results, total_count):
 
 def bulkloads_into_opensearch(es_entries, collected_metrics):
     global es_conn
-    global docid_set
     output_size, total_output_size = 0, 0
     total_count, success_count, error_count, es_response_time = 0, 0, 0, 0
     results = False
@@ -336,14 +337,18 @@ def bulkloads_into_opensearch(es_entries, collected_metrics):
         if output_size > 6000000:
             total_output_size += output_size
             try:
-                results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+                results = es_conn.bulk(
+                    body=putdata_list,
+                    params={"filter_path": ",".join(filter_path)})
             except (AuthorizationException, AuthenticationException) as err:
                 logger.warning(
                     'AuthN or AuthZ Exception raised due to SigV4 issue. '
                     f'http_compress has been disabled. {err}')
                 es_conn = utils.create_es_conn(
                     awsauth, ES_HOSTNAME, http_compress=False)
-                results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+                results = es_conn.bulk(
+                    body=putdata_list,
+                    params={"filter_path": ",".join(filter_path)})
             es_took, success, error, error_reasons, retry = check_es_results(
                 results, total_count)
             success_count += success
@@ -359,14 +364,18 @@ def bulkloads_into_opensearch(es_entries, collected_metrics):
     if output_size > 0:
         total_output_size += output_size
         try:
-            results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+            results = es_conn.bulk(
+                body=putdata_list,
+                params={"filter_path": ",".join(filter_path)})
         except (AuthorizationException, AuthenticationException) as err:
             logger.warning(
                 'AuthN or AuthZ Exception raised due to SigV4 issue. '
                 f'http_compress has been disabled. {err}')
             es_conn = utils.create_es_conn(
                 awsauth, ES_HOSTNAME, http_compress=False)
-            results = es_conn.bulk(body=putdata_list, params={"filter_path": ",".join(filter_path)})
+            results = es_conn.bulk(
+                body=putdata_list,
+                params={"filter_path": ",".join(filter_path)})
         # logger.debug(results)
         es_took, success, error, error_reasons, retry = check_es_results(
             results, total_count)
@@ -535,8 +544,8 @@ def main(event, context):
                     recs = json.loads(record['body'])
                     if 'Records' in recs:
                         # Control Tower
-                        for record in recs['Records']:
-                            process_record(record)
+                        for s3_record in recs['Records']:
+                            process_record(s3_record)
                     else:
                         # from sqs-splitted-log, Security Lake(via EventBridge)
                         process_record(recs)
@@ -547,8 +556,8 @@ def main(event, context):
             # s3 notification from SNS
             for record in event['Records']:
                 recs = json.loads(record['Sns']['Message'])
-                for record in recs['Records']:
-                    process_record(record)
+                for s3_record in recs['Records']:
+                    process_record(s3_record)
         else:
             # local execution
             for record in event['Records']:

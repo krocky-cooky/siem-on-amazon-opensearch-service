@@ -625,7 +625,7 @@ Edit the bucket policy for the S3 bucket where the logs are stored so that es-lo
 1. Create SQS queue
     * The following are mandatory fields. Enter other values according to your environment
     * Standard type
-    * Visibility Timeout: 600 seconds
+    * Visibility Timeout: 3600 seconds (recommended, six times the es-loader timeout of 600 seconds). It must be at least 600 seconds. [Doc](https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html)
 1. Modify the SQS access policy by referring to the policy example below
 
     ```json

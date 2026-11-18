@@ -24,8 +24,26 @@ from opensearchpy import AWSV4SignerAuth, OpenSearch, RequestsHttpConnection
 TIMEOUT = 10.0
 
 ENDPOINT = os.getenv('ENDPOINT')
-REGION = ENDPOINT.split('.')[1]
-SERVICE = ENDPOINT.split('.')[2]
+
+
+def parse_endpoint(hostname):
+    """Return (region, service) of an OpenSearch endpoint for SigV4.
+
+    >>> parse_endpoint('search-aes-siem-abc.us-east-1.es.amazonaws.com')
+    ('us-east-1', 'es')
+    >>> parse_endpoint('abc123.us-east-1.aoss.amazonaws.com')
+    ('us-east-1', 'aoss')
+    >>> parse_endpoint('abc123.aoss.ap-northeast-1.on.aws')
+    ('ap-northeast-1', 'aoss')
+    """
+    labels = hostname.split('.')
+    if hostname.endswith('.on.aws'):
+        # OpenSearch Serverless NextGen: <id>.aoss.<region>.on.aws
+        return labels[2], 'aoss'
+    return labels[1], labels[2]
+
+
+REGION, SERVICE = parse_endpoint(ENDPOINT)
 BUCKET_NAME = os.getenv('LOG_BUCKET')
 PERIOD_HOUR = int(os.getenv('PERIOD_HOUR', 1))
 try:
