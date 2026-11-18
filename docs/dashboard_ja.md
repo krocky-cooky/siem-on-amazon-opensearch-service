@@ -3,6 +3,7 @@
 [In English](dashboard.md) | [READMEに戻る](../README_ja.md)
 
 * [AWS Security Hub](#AWS-Security-Hub)
+* [AWS Security Hub (OCSF)](#aws-security-hub-ocsf)
 * [AWS WAF](#AWS-WAF)
 * [AWS CloudHSM](#AWS-CloudHSM)
 * [Amazon GuardDuty](#Amazon-GuardDuty)
@@ -21,6 +22,10 @@
 ## AWS Security Hub
 
 ![AWS Security Hub Dashboard](images/dashboard-securityhub.jpg)
+
+## AWS Security Hub (OCSF)
+
+新しい Security Hub の findings (`log-ocsf-securityhub-*`) のダッシュボード「OCSF Security Hub Findings Summary」です。Detection / Vulnerability / Compliance の findings を分けて表示します。
 
 ## AWS WAF
 
