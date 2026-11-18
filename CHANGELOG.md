@@ -17,16 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the dashboard "Security Hub (OCSF)" for log-ocsf-securityhub-* #495
 - Added OCSF 1.1.0 fields of Vulnerability, Compliance and Detection Findings (finding_info.\*, compliance.\*, remediation.\*, evidences, api.request.data, api.response.data) to the OCSF index template #495
 - Added ECS mapping of AWS WAFv2 logs from Security Lake (OCSF 4002 HTTP Activity). The HTTP method, URL, status code and rule name are stored in http.\*, url.\* and rule.\*, and the OCSF fields action, firewall_rule, http_response and http_status are added to the index template #496
+- Added a guide for OpenSearch Serverless NextGen time series collections to docs/serverless.md #493
 
 ### Changed
 - Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495
 - The OCSF parser uses OCSF 1.1.0 finding_info.modified_time / created_time as @timestamp of findings. OCSF 1.0.0 finding.\* is still supported #495
 - OCSF category 6 (Application Activity) and 7 are stored in log-ocsf-application-\* and log-ocsf-remediation-\* when category_name is missing #495
+- Changed the visibility timeout of the aes-siem-sqs-splitted-logs queue from 600 seconds to 3600 seconds, six times the es-loader timeout as recommended by AWS Lambda. Messages are no longer re-delivered while a long running or throttled invocation is still processing them #490
+- Changed the batch size of the event source mapping for the Security Lake subscriber queue from 10 (default) to 1. A timeout while loading large Parquet objects no longer returns the objects that were already loaded to the queue #490
 
 ### Fixed
-- Fixed the OCSF parser raising ValueError when category_uid is empty. It is now derived from class_uid #495
 - Fixed Security Lake v2 (Apache Iceberg) data files not being loaded because their file names did not match s3_key. Parquet files in aws-security-data-lake-\* buckets are now treated as Security Lake logs and Iceberg metadata files are ignored #496
 - Fixed EKS audit logs from Security Lake not being loaded because of mapping conflicts of free-form api.request.data / api.response.data #496
+- Fixed all requests failing with 403 on OpenSearch Serverless NextGen collections. The region and service for SigV4 are now read correctly from NextGen endpoints (<id>.aoss.<region>.on.aws) #493
+- Fixed CloudTrail events being rejected when requestParameters.startTime or endTime is in ISO 8601 (for example LookupEvents and RDS DescribeEvents). The index template now also accepts ISO 8601. The change applies to indices created after the update #492
+- Fixed CloudTrail events being rejected when requestParameters.filters or metrics holds a list of objects, or when the ECS / Batch container environment is masked as text. Only object values are converted to text; string values are unchanged #491
+- Fixed Inspector findings still being rejected because the index template did not accept the new updatedAt format. The template now accepts the legacy format, the new UTC format and ISO 8601. The change applies to indices created after the update #491
+- Fixed large AWS Config snapshots being rejected with "Limit of total fields [3000] has been exceeded". The total fields limit of the log-aws-config index is raised to 8000. The field structure is unchanged. The new limit applies to indices created after the update #491
+- Fixed es-loader raising KeyError 'messageId' when a Control Tower or SNS-wrapped S3 record failed on the SQS path. The failed SQS message is now reported as a batch item failure #490
+- Fixed the Security Lake parser raising ValueError when category_uid is missing or empty. It is now derived from class_uid #490
+- Clarified the required visibility timeout of the Security Lake subscriber queue in the docs #490
 
 ## [2.10.6] - 2026-08-17
 ### Changed

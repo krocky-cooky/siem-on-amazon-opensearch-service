@@ -32,7 +32,9 @@ CDK / CloudFormation 実行時の Security Lake 関連のパラメーターは�
         * 外部 ID: (任意の文字列)
 1. **【必須】** 作成されたサブスクライバーの SQS の変更
     * 対象の SQS: AmazonSecurityLake-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX-Main-Queue
-    * 可視性タイムアウトを 5 分から `10 分に変更`
+    * 可視性タイムアウトを 5 分から `60 分` に変更 (推奨)。最低でも `10 分` 以上にしてください
+    * es-loader のタイムアウトは 10 分です。Lambda はキューの可視性タイムアウトが関数のタイムアウトより短いイベントソースマッピングを拒否するため、デフォルトの 5 分のままでは CloudFormation スタックの更新が `Queue visibility timeout: 300 seconds is less than Function timeout: 600 seconds` で失敗します
+    * Lambda は可視性タイムアウトを関数のタイムアウトの 6 倍以上にすることを推奨しています。短いと、大きな Parquet ファイルの取り込み中にメッセージが再び見えるようになり、同じファイルが二重に取り込まれます。[Doc](https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/services-sqs-configure.html)
 
 作成されたサブスクライバーを確認してください。
 
