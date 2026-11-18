@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the batch size of the event source mapping for the Security Lake subscriber queue from 10 (default) to 1. A timeout while loading large Parquet objects no longer returns the objects that were already loaded to the queue #490
 
 ### Fixed
+- Fixed CloudTrail events being rejected when requestParameters.startTime or endTime is in ISO 8601 (for example LookupEvents and RDS DescribeEvents). The index template now also accepts ISO 8601. The change applies to indices created after the update #492
 - Fixed CloudTrail events being rejected when requestParameters.filters or metrics holds a list of objects, or when the ECS / Batch container environment is masked as text. Only object values are converted to text; string values are unchanged #491
 - Fixed Inspector findings still being rejected because the index template did not accept the new updatedAt format. The template now accepts the legacy format, the new UTC format and ISO 8601. The change applies to indices created after the update #491
 - Fixed large AWS Config snapshots being rejected with "Limit of total fields [3000] has been exceeded". The total fields limit of the log-aws-config index is raised to 8000. The field structure is unchanged. The new limit applies to indices created after the update #491
