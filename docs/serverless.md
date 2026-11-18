@@ -50,6 +50,29 @@ Please choose one of the following encryption keys:
 
 Only [AWS owned key] is supported for encryption in the SIEM solution.
 
+### NextGen collections
+
+OpenSearch Serverless has two generations: Classic and NextGen. The console creates NextGen collections by default. The collection that the CDK / CloudFormation template creates is Classic.
+
+To use a NextGen time series collection, create a collection group and a time series collection yourself in advance, and enter the collection name in `DomainOrCollectionName`.
+
+Main differences from Classic
+
+|Difference|Classic|NextGen|
+|----------|-------|-------|
+|Endpoint|`<id>.<region>.aoss.amazonaws.com`|`<id>.aoss.<region>.on.aws`|
+|Collection group|Optional|Required|
+|OpenSearch Dashboards|Provided per collection|Not provided. Use [OpenSearch UI](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/application.html)|
+|Document ID|Not allowed in time series collections|Not allowed in time series collections|
+|Timestamp|Optional|Documents without `@timestamp` are rejected|
+|Data retention|Data lifecycle policies|Index setting `index.data.retention`|
+
+* The SIEM writes documents without an ID and sets `@timestamp` on every log
+* Dashboards are not imported automatically on NextGen
+* NextGen uses a standard VPC endpoint (`com.amazonaws.<region>.aoss-data`) for access from within a VPC. The `VpcEndpointId` parameter does not support it yet, so use a public collection
+
+For details, see [Creating collections](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-create.html) and [Collection endpoints](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-collection-endpoints.html).
+
 ## Deploying SIEM
 
 1. Run the AWS CDK or CloudFormation template.

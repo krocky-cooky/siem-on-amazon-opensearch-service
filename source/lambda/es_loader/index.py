@@ -44,7 +44,7 @@ SQS_SPLITTED_LOGS_URL = None
 if 'SQS_SPLITTED_LOGS_URL' in os.environ:
     SQS_SPLITTED_LOGS_URL = os.environ['SQS_SPLITTED_LOGS_URL']
 ES_HOSTNAME = utils.get_es_hostname()
-SERVICE = ES_HOSTNAME.split('.')[2]
+SERVICE = utils.parse_endpoint(ES_HOSTNAME)[1]
 AOSS_TYPE = os.getenv('AOSS_TYPE', '')
 docid_set = set()
 

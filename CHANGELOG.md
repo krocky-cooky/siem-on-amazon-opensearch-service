@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added unit tests for es-loader under tests/. They run without OpenSearch, check that every log type in aws.ini builds its logconfig and imports its sf_ module, and can be run from a fresh venv with `pip install -r tests/requirements.txt && pytest tests` #489
 - Added a GitHub Actions workflow that runs pytest, flake8 on changed Python files, a version string check and cfn-lint on every pull request #489
 - Added deployment/bump_version.py. `python3 deployment/bump_version.py <new version>` updates the version in every file, and `--check` fails when a file has a different version #489
+- Added a guide for OpenSearch Serverless NextGen time series collections to docs/serverless.md #493
+
+### Fixed
+- Fixed all requests failing with 403 on OpenSearch Serverless NextGen collections. The region and service for SigV4 are now read correctly from NextGen endpoints (<id>.aoss.<region>.on.aws) #493
 
 ### Changed
 - Changed the visibility timeout of the aes-siem-sqs-splitted-logs queue from 600 seconds to 3600 seconds, six times the es-loader timeout as recommended by AWS Lambda. Messages are no longer re-delivered while a long running or throttled invocation is still processing them #490
