@@ -464,9 +464,31 @@ def get_es_hostname():
     return es_hostname
 
 
+def parse_endpoint(es_hostname):
+    """Return (region, service) of an OpenSearch endpoint for SigV4.
+
+    >>> parse_endpoint('search-aes-siem-abc.us-east-1.es.amazonaws.com')
+    ('us-east-1', 'es')
+    >>> parse_endpoint('vpc-aes-siem-abc.cn-north-1.es.amazonaws.com.cn')
+    ('cn-north-1', 'es')
+    >>> parse_endpoint('abc123.us-east-1.aoss.amazonaws.com')
+    ('us-east-1', 'aoss')
+    >>> parse_endpoint('abc123.aoss.ap-northeast-1.on.aws')
+    ('ap-northeast-1', 'aoss')
+    >>> parse_endpoint('abc123.aoss-fips.us-east-1.on.aws')
+    ('us-east-1', 'aoss')
+    """
+    labels = es_hostname.split('.')
+    if es_hostname.endswith('.on.aws'):
+        # OpenSearch Serverless NextGen: <id>.aoss.<region>.on.aws
+        return labels[2], 'aoss'
+    # domain: <name>.<region>.es.amazonaws.com
+    # Serverless Classic: <id>.<region>.aoss.amazonaws.com
+    return labels[1], labels[2]
+
+
 def create_awsauth(es_hostname):
-    es_region = es_hostname.split('.')[1]
-    service = es_hostname.split('.')[2]
+    es_region, service = parse_endpoint(es_hostname)
     # For Debug
     # boto3.set_stream_logger('botocore', level='DEBUG')
     credentials = boto3.Session().get_credentials()
@@ -559,6 +581,30 @@ def get_logtype_from_s3key(s3key, logtype_s3key_dict):
         if m:
             return logtype
     return 'unknown'
+
+
+def fix_logtype_for_security_lake(logtype, s3bucket, s3key):
+    """Security Lake v2 (Apache Iceberg) data file names are not always
+    32 hex chars + .gz.parquet. Treat parquet files in the Security Lake
+    bucket as securitylake if no log type matched.
+
+    >>> fix_logtype_for_security_lake(
+    ...     'unknown', 'aws-security-data-lake-us-east-1-xxx',
+    ...     'aws/EKS_AUDIT/2.0/data/00000-0-abc.parquet')
+    'securitylake'
+    >>> fix_logtype_for_security_lake(
+    ...     'unknown', 'aws-security-data-lake-us-east-1-xxx',
+    ...     'aws/EKS_AUDIT/2.0/metadata/snap-1.avro')
+    'unknown'
+    >>> fix_logtype_for_security_lake(
+    ...     'unknown', 'my-log-bucket', 'x/data/00000-0-abc.parquet')
+    'unknown'
+    """
+    if (logtype == 'unknown'
+            and s3bucket.startswith('aws-security-data-lake-')
+            and s3key.endswith('.parquet')):
+        return 'securitylake'
+    return logtype
 
 
 def sqs_queue(queue_url):

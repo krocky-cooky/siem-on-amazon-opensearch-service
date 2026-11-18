@@ -253,6 +253,26 @@ EventBridge の設定
     * 他は任意の値を選択します
     * [**作成**] を選択を選択して完了です
 
+#### 新しい Security Hub の OCSF findings (Findings Imported V2)
+
+新しい Security Hub は findings を OCSF 1.1.0 形式で EventBridge に送信します (detail-type: `Findings Imported V2`)。Security Hub CSPM の ASFF 形式 (detail-type: `Security Hub Findings - Imported`) とは別のログタイプ `securityhub-ocsf` として取り込みます。
+
+* s3_key の初期値: `Findings_Imported_V2` または `SecurityHub-OCSF/` (Firehose の出力パスに指定)
+* インデックス: `log-ocsf-securityhub-*` (OCSF のインデックステンプレート `log-ocsf-*` が適用されます)
+* CloudFormation: `siem-log-exporter-eventbridge-events` テンプレートのパラメーター **LoadSecurityHubOcsf** を `Yes` にします。既存ユーザーの重複取り込みを避けるため初期値は `No` です
+* 手動で設定する場合: EventBridge ルールのイベントタイプに `Findings Imported V2` を指定し、Firehose の S3 prefix を [**AWSLogs/123456789012/SecurityHub-OCSF/[region]/**] にします。ASFF 用の `SecurityHub/` と同じ prefix にしないでください
+* 新しい Security Hub は CSPM や GuardDuty の findings も OCSF で送ります。ASFF と OCSF の両方を有効にすると、同じ finding が `log-aws-securityhub-*` と `log-ocsf-securityhub-*` の両方に入ります
+
+#### Security Hub の findings を S3 にエクスポートしたファイル (JSON / OCSF)
+
+Security Hub コンソールの findings のページから、findings を S3 にエクスポートできます ([ドキュメント](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-findings-export.html))。JSON (OCSF) 形式のファイルは、ログタイプ `securityhub-ocsf` として取り込めます。
+
+* エクスポート先: SIEM のログ用 S3 バケット `aes-siem-[AWS アカウント ID]-log`
+* prefix: [**AWSLogs/123456789012/SecurityHub-OCSF/**] を含めます
+* 形式: **JSON (OCSF)** を選びます。CSV は取り込めません
+* KMS キー: SIEM のログ用バケットを暗号化しているキーを指定し、キーポリシーで Security Hub に書き込みを許可します
+* 同じ finding を EventBridge 経由でも取り込んでいる場合、ドキュメント ID が同じなので重複しません
+
 ### AWS Network Firewall (Experimental Support)
 
 ![NFW to S3](images/nfw-to-s3.jpg)

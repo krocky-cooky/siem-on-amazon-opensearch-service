@@ -3,6 +3,7 @@
 [View this page in Japanese (日本語)](dashboard_ja.md) | [Chinese (简体中文)](dashboard_zh-cn.md) | [Back to README](../README.md)
 
 * [AWS Security Hub](#AWS-Security-Hub)
+* [AWS Security Hub (OCSF)](#aws-security-hub-ocsf)
 * [AWS WAF](#AWS-WAF)
 * [AWS CloudHSM](#AWS-CloudHSM)
 * [Amazon GuardDuty](#Amazon-GuardDuty)
@@ -21,6 +22,10 @@
 ## AWS Security Hub
 
 ![AWS Security Hub Dashboard](images/dashboard-securityhub.jpg)
+
+## AWS Security Hub (OCSF)
+
+The dashboard "OCSF Security Hub Findings Summary" shows findings of the new Security Hub (`log-ocsf-securityhub-*`). Detection, Vulnerability and Compliance findings are shown separately.
 
 ## AWS WAF
 

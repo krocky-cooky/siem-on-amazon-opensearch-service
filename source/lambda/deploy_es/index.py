@@ -97,7 +97,12 @@ LOGGROUP_RETENTIONS = [
     ('/aws/lambda/aes-siem-ioc-plan', 90),
     ('/aws/lambda/aes-siem-resource-validator', 180),
 ]
-if ENDPOINT:
+if ENDPOINT and ENDPOINT.endswith('.on.aws'):
+    # OpenSearch Serverless NextGen: <id>.aoss.<region>.on.aws
+    AOS_SERVICE = 'aoss'
+elif ENDPOINT:
+    # domain: <name>.<region>.es.amazonaws.com
+    # Serverless Classic: <id>.<region>.aoss.amazonaws.com
     AOS_SERVICE = ENDPOINT.split('.')[2]
 elif DEPLOYMENT_TARGET == 'opensearch_managed_cluster':
     AOS_SERVICE = 'es'

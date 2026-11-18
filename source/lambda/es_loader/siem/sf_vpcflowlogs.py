@@ -46,4 +46,13 @@ def transform(logdata):
     except KeyError:
         pass
 
+    # v7: traffic from a running ECS task. '-' means no value
+    cluster_arn = logdata.get('ecs_cluster_arn', '-')
+    task_id = logdata.get('ecs_task_id', '-')
+    if cluster_arn != '-' or task_id != '-':
+        orchestrator = logdata.setdefault('orchestrator', {})
+        orchestrator['type'] = 'ecs'
+        if task_id != '-':
+            orchestrator.setdefault('resource', {})['type'] = 'task'
+
     return logdata
