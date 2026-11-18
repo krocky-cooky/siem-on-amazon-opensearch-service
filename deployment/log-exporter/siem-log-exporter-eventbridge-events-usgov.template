@@ -1,4 +1,4 @@
-Description: "SIEM on Amazon OpenSearch Service v2.10.6: log exporter - EventBridge events (SecurityHub, ConfigRules, Inspector)"
+Description: "SIEM on Amazon OpenSearch Service v2.10.6: log exporter - EventBridge events (SecurityHub, SecurityHub OCSF, ConfigRules, Inspector)"
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -14,6 +14,7 @@ Metadata:
         Parameters:
           - LoadInspector
           - LoadSecurtyHub
+          - LoadSecurityHubOcsf
           - LoadConfigRules
 Parameters:
   KdfName:
@@ -46,6 +47,13 @@ Parameters:
       - "Yes"
       - "No"
     Description: Do you enable to load SecurityHub events to OpenSearch Service?
+  LoadSecurityHubOcsf:
+    Type: String
+    Default: "No"
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Description: Do you enable to load new Security Hub findings (OCSF, Findings Imported V2) to OpenSearch Service?
   LoadConfigRules:
     Type: String
     Default: "Yes"
@@ -182,6 +190,28 @@ Resources:
               - KdfTargetEventsRole5CEF31BD
               - Arn
     Condition: IsSecurityHub
+  RuleSecurityHubOcsf:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "SIEM on OpenSearch Service v2.10.6:"
+      EventPattern:
+        detail-type:
+          - Findings Imported V2
+        source:
+          - aws.securityhub
+      Name: siem-securityhub-ocsf-to-firehose
+      State: ENABLED
+      Targets:
+        - Arn:
+            Fn::GetAtt:
+              - Kdf
+              - Arn
+          Id: Target0
+          RoleArn:
+            Fn::GetAtt:
+              - KdfTargetEventsRole5CEF31BD
+              - Arn
+    Condition: IsSecurityHubOcsf
   RuleConfigRules81A566BA:
     Type: AWS::Events::Rule
     Properties:
@@ -276,6 +306,10 @@ Conditions:
   IsSecurityHub:
     Fn::Equals:
       - Ref: LoadSecurtyHub
+      - "Yes"
+  IsSecurityHubOcsf:
+    Fn::Equals:
+      - Ref: LoadSecurityHubOcsf
       - "Yes"
   IsConfigRules:
     Fn::Equals:

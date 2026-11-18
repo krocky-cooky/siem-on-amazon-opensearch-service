@@ -11,16 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added unit tests for es-loader under tests/. They run without OpenSearch, check that every log type in aws.ini builds its logconfig and imports its sf_ module, and can be run from a fresh venv with `pip install -r tests/requirements.txt && pytest tests` #489
 - Added a GitHub Actions workflow that runs pytest, flake8 on changed Python files, a version string check and cfn-lint on every pull request #489
 - Added deployment/bump_version.py. `python3 deployment/bump_version.py <new version>` updates the version in every file, and `--check` fails when a file has a different version #489
+- Added log type securityhub-ocsf for OCSF findings of the new AWS Security Hub (EventBridge detail-type "Findings Imported V2"). Findings are stored in log-ocsf-securityhub-* and mapped to ECS (source, destination, rule, event.severity, event.provider). Updated findings are kept as separate documents with an idempotent _id #495
+- Added the parameter LoadSecurityHubOcsf (default: No) and the EventBridge rule siem-securityhub-ocsf-to-firehose to the siem-log-exporter-eventbridge-events templates #495
+- Added support for Security Hub findings exported to S3 in JSON (OCSF). The new es-loader option json_delimiter_optional reads one finding per line, a JSON array, or an object with findings #495
+- Added the dashboard "Security Hub (OCSF)" for log-ocsf-securityhub-* #495
+- Added OCSF 1.1.0 fields of Vulnerability, Compliance and Detection Findings (finding_info.\*, compliance.\*, remediation.\*, evidences, api.request.data, api.response.data) to the OCSF index template #495
 - Added a guide for OpenSearch Serverless NextGen time series collections to docs/serverless.md #493
 
-### Fixed
-- Fixed all requests failing with 403 on OpenSearch Serverless NextGen collections. The region and service for SigV4 are now read correctly from NextGen endpoints (<id>.aoss.<region>.on.aws) #493
-
 ### Changed
+- Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495
+- The OCSF parser uses OCSF 1.1.0 finding_info.modified_time / created_time as @timestamp of findings. OCSF 1.0.0 finding.\* is still supported #495
+- OCSF category 6 (Application Activity) and 7 are stored in log-ocsf-application-\* and log-ocsf-remediation-\* when category_name is missing #495
 - Changed the visibility timeout of the aes-siem-sqs-splitted-logs queue from 600 seconds to 3600 seconds, six times the es-loader timeout as recommended by AWS Lambda. Messages are no longer re-delivered while a long running or throttled invocation is still processing them #490
 - Changed the batch size of the event source mapping for the Security Lake subscriber queue from 10 (default) to 1. A timeout while loading large Parquet objects no longer returns the objects that were already loaded to the queue #490
 
 ### Fixed
+- Fixed all requests failing with 403 on OpenSearch Serverless NextGen collections. The region and service for SigV4 are now read correctly from NextGen endpoints (<id>.aoss.<region>.on.aws) #493
 - Fixed CloudTrail events being rejected when requestParameters.startTime or endTime is in ISO 8601 (for example LookupEvents and RDS DescribeEvents). The index template now also accepts ISO 8601. The change applies to indices created after the update #492
 - Fixed CloudTrail events being rejected when requestParameters.filters or metrics holds a list of objects, or when the ECS / Batch container environment is masked as text. Only object values are converted to text; string values are unchanged #491
 - Fixed Inspector findings still being rejected because the index template did not accept the new updatedAt format. The template now accepts the legacy format, the new UTC format and ISO 8601. The change applies to indices created after the update #491
