@@ -1,0 +1,27 @@
+title: AWS S3 Public Access Block Removed
+id: 1552b1a6-c6a5-5466-9e6a-f96af4bc6f20
+status: experimental
+description: Detects that S3 Block Public Access is removed from a bucket or an account. Buckets that store patient records could become public
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+tags:
+    - attack.defense_evasion
+    - attack.exfiltration
+    - attack.t1530
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: s3.amazonaws.com
+        eventName:
+            - DeleteBucketPublicAccessBlock
+            - PutBucketPublicAccessBlock
+            - DeletePublicAccessBlock
+            - PutPublicAccessBlock
+    condition: selection
+falsepositives:
+    - Approved bucket configuration for public content
+level: high

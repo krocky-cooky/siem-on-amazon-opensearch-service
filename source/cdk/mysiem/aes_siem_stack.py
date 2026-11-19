@@ -320,6 +320,27 @@ class MyAesSiemStack(cdk.Stack):
                          'addresses'),
             default='')
 
+        enable_security_analytics = cdk.CfnParameter(
+            self, 'EnableSecurityAnalyticsDetectors',
+            allowed_values=['true', 'false'],
+            description=('Create a Security Analytics detector with the '
+                         'pre-packaged CloudTrail rules. Only for Amazon '
+                         'OpenSearch Service domains (OpenSearch 2.5 or '
+                         'later). The detector is created when CloudTrail '
+                         'logs are in OpenSearch, so update the stack again '
+                         'if the domain has no CloudTrail index yet'),
+            default='false')
+
+        detection_packs = cdk.CfnParameter(
+            self, 'DetectionPacks',
+            allowed_pattern=(
+                r'^(|(finance|healthcare)(,(finance|healthcare))?)$'),
+            description=('(Optional) Industry packs of Sigma rules for '
+                         'CloudTrail, comma-separated: finance, healthcare. '
+                         'Each pack gets a Security Analytics detector. '
+                         'Only for Amazon OpenSearch Service domains'),
+            default='')
+
         engine_version = cdk.CfnParameter(
             self, 'EngineVersion',
             allowed_pattern=r'^OpenSearch_[0-9]+\.[0-9]+$',
@@ -553,6 +574,9 @@ class MyAesSiemStack(cdk.Stack):
                                     opensearch_ui_name.logical_id,
                                     opensearch_ui_admin_arn.logical_id,
                                     opensearch_ui_source_cidrs.logical_id]},
+                    {'Label': {'default': 'Detection content - optional'},
+                     'Parameters': [enable_security_analytics.logical_id,
+                                    detection_packs.logical_id]},
                     {'Label': {'default': 'Log Enrichment - optional'},
                      'Parameters': [geoip_license_key.logical_id,
                                     trusted_proxy_list.logical_id,
@@ -587,6 +611,8 @@ class MyAesSiemStack(cdk.Stack):
         cfn_parameters_dict = {
             'deployment_target': deployment_target,
             'engine_version': engine_version,
+            'enable_security_analytics': enable_security_analytics,
+            'detection_packs': detection_packs,
             'enable_opensearch_ui': enable_opensearch_ui,
             'opensearch_ui_name': opensearch_ui_name,
             'opensearch_ui_admin_arn': opensearch_ui_admin_arn,

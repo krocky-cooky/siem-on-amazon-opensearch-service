@@ -1,0 +1,26 @@
+title: AWS CloudTrail Logging Stopped Or Trail Deleted
+id: 7c5e1ad1-5288-5293-9f71-11994d85bdba
+status: experimental
+description: Detects that CloudTrail logging is stopped, or that a trail is deleted or changed. This removes the audit trail of privileged operations
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+tags:
+    - attack.defense_evasion
+    - attack.t1562.008
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: cloudtrail.amazonaws.com
+        eventName:
+            - StopLogging
+            - DeleteTrail
+            - UpdateTrail
+            - PutEventSelectors
+    condition: selection
+falsepositives:
+    - Approved trail maintenance
+level: high

@@ -1,0 +1,25 @@
+title: AWS Macie Disabled
+id: b47754f9-4567-54a3-9538-b22011bcc371
+status: experimental
+description: Detects that Amazon Macie, which finds sensitive data in S3, is disabled or that a member account is removed
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/macie/latest/user/logging-using-cloudtrail.html
+tags:
+    - attack.defense_evasion
+    - attack.t1562.001
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: macie2.amazonaws.com
+        eventName:
+            - DisableMacie
+            - DisassociateMember
+            - DeleteMember
+    condition: selection
+falsepositives:
+    - Approved account clean-up
+level: medium

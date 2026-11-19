@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parameter `EngineVersion` for the engine version of a new Amazon OpenSearch Service domain (#505)
 - The saved objects import selects `dashboard.3.x.ndjson` for OpenSearch Dashboards 3.x when it is in the package, and falls back to `dashboard.ndjson` (#505)
 - Optional OpenSearch UI application for the managed domain (`EnableOpenSearchUi`, off by default), with IAM authentication, a managed policy for analysts (not attached to anybody) and an optional source IP restriction. See docs/opensearch_ui.md. The endpoint of an OpenSearch UI application is reachable from the internet, so CI checks that it stays opt-in (#486)
+- Optional detection content for Amazon OpenSearch Service domains: `EnableSecurityAnalyticsDetectors` creates a Security Analytics detector with the pre-packaged CloudTrail rules, and `DetectionPacks` adds the industry packs `finance` and `healthcare` (5 Sigma rules each). Off by default. See docs/detection_content.md (#506)
 
 ### Changed
 - Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495

@@ -183,6 +183,8 @@ CloudFormation テンプレートと同じパラーメーターを指定して C
 | OpenSearchUiName | アプリケーション名。初期値は `aes-siem-ui` |
 | OpenSearchUiAdminArn | (任意) アプリケーションの管理者にする IAM ユーザーまたはロールの ARN を 1 つ |
 | OpenSearchUiAllowedSourceCidrs | (任意) OpenSearch UI 用マネージドポリシーでサインインを許可する CIDR (空白区切り) |
+| EnableSecurityAnalyticsDetectors | `false` (初期値) または `true`。Security Analytics の検知器を、CloudTrail の事前定義ルールで作成します (Amazon OpenSearch Service のドメインのみ)。[検知コンテンツ](detection_content.md) を参照してください |
+| DetectionPacks | (任意) CloudTrail 用の Sigma ルールの業種別パック。カンマ区切りで `finance`、`healthcare` |
 | NextGenIndexRetentionDays | (任意) index テンプレートに追加するデータ保持日数 (1-3650)。OpenSearch Serverless NextGen の場合のみ使われます |
 | NextGenIndexWarmAfterDays | (任意) ウォーム層に移すまでの日数 (1 以上、保持期間以下)。OpenSearch Serverless NextGen の場合のみ使われます |
 | SnsEmail |メールアドレス。SIEM on OpenSearch Service で検知したアラートを SNS 経由で送信する|

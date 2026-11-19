@@ -1,0 +1,26 @@
+title: AWS HealthLake Data Export Or Datastore Deleted
+id: e9283455-017e-53f6-a38b-99bb85d779c4
+status: experimental
+description: Detects that FHIR data is exported from an AWS HealthLake data store, or that the data store is deleted
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/healthlake/latest/devguide/security-logging-monitoring.html
+tags:
+    - attack.exfiltration
+    - attack.impact
+    - attack.t1530
+    - attack.t1485
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: healthlake.amazonaws.com
+        eventName:
+            - StartFHIRExportJob
+            - DeleteFHIRDatastore
+    condition: selection
+falsepositives:
+    - Approved data export for research
+level: medium

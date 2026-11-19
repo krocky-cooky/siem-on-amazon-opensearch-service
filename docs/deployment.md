@@ -189,6 +189,8 @@ You can specify the same parameters as for the CloudFormation template. The para
 | OpenSearchUiName | Name of the application. The default is `aes-siem-ui` |
 | OpenSearchUiAdminArn | (Optional) ARN of one IAM user or role that is administrator of the application |
 | OpenSearchUiAllowedSourceCidrs | (Optional) Space-delimited CIDR blocks that are allowed to sign in, in the managed policy for OpenSearch UI |
+| EnableSecurityAnalyticsDetectors | `false` (default) or `true`. Creates a Security Analytics detector with the pre-packaged CloudTrail rules (Amazon OpenSearch Service domains only). See [Detection content](detection_content.md) |
+| DetectionPacks | (Optional) Industry packs of Sigma rules for CloudTrail, comma-separated: `finance`, `healthcare` |
 | NextGenIndexRetentionDays | (Optional) Data retention in days (1-3650) added to index templates. Used only for OpenSearch Serverless NextGen |
 | NextGenIndexWarmAfterDays | (Optional) Days until data moves to the warm tier (1 or more, up to the retention). Used only for OpenSearch Serverless NextGen |
 | SnsEmail | Email address. Alerts detected by SIEM on OpenSearch Service will be sent to this email address via SNS |

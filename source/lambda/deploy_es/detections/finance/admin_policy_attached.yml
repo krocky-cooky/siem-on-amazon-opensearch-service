@@ -1,0 +1,26 @@
+title: AWS Administrator Policy Attached To Identity
+id: 3da80d66-47fb-55a2-8c5d-5e77f20d6b8e
+status: experimental
+description: Detects that the AdministratorAccess managed policy is attached to a user, group or role
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+tags:
+    - attack.privilege_escalation
+    - attack.t1098.003
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: iam.amazonaws.com
+        eventName:
+            - AttachUserPolicy
+            - AttachGroupPolicy
+            - AttachRolePolicy
+        requestParameters.policyArn|endswith: ':policy/AdministratorAccess'
+    condition: selection
+falsepositives:
+    - Approved creation of administrator roles
+level: high

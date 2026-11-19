@@ -1,0 +1,24 @@
+title: AWS KMS Key Disabled Or Scheduled For Deletion
+id: 9f2c1b3d-086e-5eb0-8177-0d8083e65a09
+status: experimental
+description: Detects that a KMS key is disabled or scheduled for deletion. Data encrypted with the key becomes unreadable
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/kms/latest/developerguide/logging-using-cloudtrail.html
+tags:
+    - attack.impact
+    - attack.t1485
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: kms.amazonaws.com
+        eventName:
+            - DisableKey
+            - ScheduleKeyDeletion
+    condition: selection
+falsepositives:
+    - Approved key rotation or clean-up
+level: high

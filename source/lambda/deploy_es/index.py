@@ -28,6 +28,7 @@ from crhelper import CfnResource
 from opensearchpy import AWSV4SignerAuth
 
 import compat
+import detections
 import nextgen
 from aoss import MyAoss
 
@@ -66,6 +67,9 @@ DEPLOYMENT_TARGET = os.getenv(
 # opensearch_managed_cluster or opensearch_serverless
 NEXTGEN_INDEX_RETENTION_DAYS = os.getenv('NEXTGEN_INDEX_RETENTION_DAYS', '')
 NEXTGEN_INDEX_WARM_AFTER_DAYS = os.getenv('NEXTGEN_INDEX_WARM_AFTER_DAYS', '')
+ENABLE_SECURITY_ANALYTICS = os.getenv(
+    'ENABLE_SECURITY_ANALYTICS', 'false').lower() == 'true'
+DETECTION_PACKS = os.getenv('DETECTION_PACKS', '')
 AOS_SUBNET_IDS = os.getenv('AOS_SUBNET_IDS')
 VPCE_ID = os.getenv('VPCE_ID')
 ENDPOINT = os.getenv('ENDPOINT', '')
@@ -496,6 +500,33 @@ def configure_siem(dist_name, es_app_data):
     # lagecy intex template. It will be deplecated
     logger.info('Create/Update legacy index templates')
     upsert_obj(awsauth, es_app_data['legacy-index-template'], api='_template')
+
+
+def configure_detection_content(dist_name, domain_version):
+    """Create Security Analytics detectors and industry packs, if enabled.
+    Only for OpenSearch managed domains. Errors never fail the deployment."""
+    packs = detections.parse_packs(DETECTION_PACKS)
+    if not ENABLE_SECURITY_ANALYTICS and not packs:
+        return
+    if AOS_SERVICE != 'es' or dist_name != 'opensearch':
+        logger.info('Security Analytics is available on OpenSearch Service '
+                    'domains only. Skip detection content')
+        return
+    if _parse_dashboards_version(domain_version) < (2, 5):
+        logger.info(f'Security Analytics needs OpenSearch 2.5 or later. '
+                    f'Skip detection content on {domain_version}')
+        return
+    awsauth = auth_aes()
+
+    def request(method, path, headers=None, **kwargs):
+        merged = dict(RESTAPI_HEADERS)
+        merged.update(headers or {})
+        return requests.request(
+            method, f'https://{ENDPOINT}/{path}', auth=awsauth,
+            headers=merged, timeout=60, **kwargs)
+
+    detections.setup_detection_content(
+        request, ENABLE_SECURITY_ANALYTICS, packs)
 
 
 def configure_index_rollover(es_app_data):
@@ -1329,6 +1360,8 @@ def aes_config_create_update(event, context):
     configure_index_rollover(es_app_data)
 
     register_snapshot_repository()
+
+    configure_detection_content(dist_name, domain_version)
 
     if nextgen.is_nextgen_endpoint(ENDPOINT):
         # NextGen collections have no OpenSearch Dashboards endpoint
