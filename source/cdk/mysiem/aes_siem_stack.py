@@ -285,6 +285,15 @@ class MyAesSiemStack(cdk.Stack):
                          'Serverless is experimental option'),
             default='opensearch_managed_cluster')
 
+        engine_version = cdk.CfnParameter(
+            self, 'EngineVersion',
+            allowed_pattern=r'^OpenSearch_[0-9]+\.[0-9]+$',
+            description=('Engine version of a new Amazon OpenSearch Service '
+                         'domain, for example OpenSearch_3.5. An existing '
+                         'domain is not upgraded by this parameter. It is '
+                         'not used for OpenSearch Serverless'),
+            default='OpenSearch_3.5')
+
         nextgen_retention_days = cdk.CfnParameter(
             self, 'NextGenIndexRetentionDays',
             allowed_pattern=r'^([0-9]{1,4}|)$',
@@ -499,6 +508,7 @@ class MyAesSiemStack(cdk.Stack):
                     {'Label': {'default': 'Basic Configuration'},
                      'Parameters': [deployment_target.logical_id,
                                     domain_or_collection_name.logical_id,
+                                    engine_version.logical_id,
                                     nextgen_retention_days.logical_id,
                                     nextgen_warm_after_days.logical_id,
                                     sns_email.logical_id,
@@ -536,6 +546,7 @@ class MyAesSiemStack(cdk.Stack):
 
         cfn_parameters_dict = {
             'deployment_target': deployment_target,
+            'engine_version': engine_version,
             'nextgen_retention_days': nextgen_retention_days,
             'nextgen_warm_after_days': nextgen_warm_after_days,
             'domain_or_collection_name': domain_or_collection_name,
