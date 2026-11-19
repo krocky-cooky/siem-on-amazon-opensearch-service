@@ -94,6 +94,30 @@ The initial value of s3_key: `Inspector2_Finding` (specified in the Firehose out
 | 1 |[![core resource](./images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=log-exporter-core-resource&templateURL=https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-core.template) [link](https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-core.template) | CloudFormation for core resource. This template gets the S3 bucket name of the log forwarding destination and creates IAM roles. Commonly used in other AWS service settings. |
 | 2 |[![eventbridge](./images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=log-exporter-eventbridge-events&templateURL=https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-eventbridge-events.template) [link](https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-eventbridge-events.template) | This template creates Firehose,set up EventBridge to deliver Events to the Firehose. A template common to Security Hub and Config Rules. |
 
+### Amazon Bedrock, VPC Lattice, Verified Access (CloudWatch vended logs)
+
+Deliver the logs to the SIEM S3 bucket as JSON (or Parquet for vended logs). The log type is detected by the S3 path.
+
+| Service | Log type | Initial value of s3_key | Notes |
+|---|---|---|---|
+| Amazon Bedrock model invocation logs | `bedrock` | `BedrockModelInvocationLogs/` | Prompts and responses are loaded as text. They can contain personal data, so review who can read the index |
+| Amazon VPC Lattice access logs and resource access logs | `vpclattice` | `/VPCLattice/` (not case sensitive) | |
+| AWS Verified Access logs (OCSF) | `verifiedaccess` | `VerifiedAccess` (not case sensitive) | Include `VerifiedAccess` in the log prefix of the delivery |
+| AWS Network Firewall TLS inspection logs | `networkfirewall` | `_network-firewall_` | TLS events without `event_type` are loaded with `event.module` set to `tls` |
+
+IAM Identity Center and AWS console sign-in events are loaded from CloudTrail (`cloudtrail`). Sign-in events such as `ConsoleLogin` and `UserAuthentication` have `event.category` set to `authentication`, and a failed `ConsoleLogin` has `event.outcome` set to `failure`.
+
+#### Other vended logs (generic intake)
+
+For a source without a log type, such as Amazon Cognito user pool logs, use the `vended-generic` log type. It is disabled by default. Set a part of the S3 path in user.ini to enable it:
+
+```ini
+[vended-generic]
+s3_key = AWSLogs/[0-9]{12}/MyService/
+```
+
+JSON and Parquet are supported, field names such as `cs(User-Agent)` are converted to `cs_user_agent`, and logs are stored in `log-aws-vended-*`. The timestamp is taken from the first key found in `timestamp_key_list` (`timestamp_ms`, `timestamp`, `eventtimestamp`, `starttime`, `time` and others). Add your key to the list if the log uses another name. ECS fields are not mapped, so copy the section into a new log type to add them.
+
 ### AWS CloudHSM
 
 ![CloudHSM to S3](images/log-source-cloudhsm-to-s3.svg)

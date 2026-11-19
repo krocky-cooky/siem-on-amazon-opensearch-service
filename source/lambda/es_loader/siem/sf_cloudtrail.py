@@ -104,6 +104,25 @@ def extract_instance_id(logdata):
     return logdata
 
 
+# sign-in events of the AWS console and IAM Identity Center
+AUTH_EVENT_SOURCES = ('signin.amazonaws.com', 'sso.amazonaws.com',
+                      'sso-directory.amazonaws.com')
+AUTH_EVENT_NAMES = ('ConsoleLogin', 'CheckMfa', 'SwitchRole', 'Logout',
+                    'UserAuthentication', 'Authenticate',
+                    'CredentialChallenge', 'CredentialVerification')
+
+
+def mark_authentication_event(logdata):
+    if (logdata.get('eventSource') not in AUTH_EVENT_SOURCES
+            or logdata.get('eventName') not in AUTH_EVENT_NAMES):
+        return
+    logdata['event']['category'] = ['authentication', 'iam']
+    # ConsoleLogin failures have no errorCode
+    result = (logdata.get('responseElements') or {})
+    if isinstance(result, dict) and result.get('ConsoleLogin') == 'Failure':
+        logdata['event']['outcome'] = 'failure'
+
+
 def transform(logdata):
     if logdata.get('eventCategory') == 'NetworkActivity':
         # network activity events for VPC endpoints (eventType AwsVpceEvent)
@@ -120,6 +139,7 @@ def transform(logdata):
             logdata['user']['name'] = name.split(':')[-1].split('/')[-1]
     except KeyError:
         pass
+    mark_authentication_event(logdata)
     logdata = extract_instance_id(logdata)
 
     # https://github.com/aws-samples/siem-on-amazon-elasticsearch/issues/33
