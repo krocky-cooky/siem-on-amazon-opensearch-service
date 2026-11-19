@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the visibility timeout of the aes-siem-sqs-splitted-logs queue from 600 seconds to 3600 seconds, six times the es-loader timeout as recommended by AWS Lambda. Messages are no longer re-delivered while a long running or throttled invocation is still processing them #490
 - Changed the batch size of the event source mapping for the Security Lake subscriber queue from 10 (default) to 1. A timeout while loading large Parquet objects no longer returns the objects that were already loaded to the queue #490
 - OpenSearch Serverless NextGen: the configuration step skips the OpenSearch Dashboards import and logs a pointer to OpenSearch UI, instead of calling endpoints that do not exist (#500)
+- CI: flake8 runs on all Python files, and a new job runs cdk synth without AWS credentials (AES_SIEM_CDK_OFFLINE=true) and lints the synthesized template with cfn-lint (#501)
 
 ### Fixed
 - Fixed Security Lake v2 (Apache Iceberg) data files not being loaded because their file names did not match s3_key. Parquet files in aws-security-data-lake-\* buckets are now treated as Security Lake logs and Iceberg metadata files are ignored #496
@@ -45,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed es-loader raising KeyError 'messageId' when a Control Tower or SNS-wrapped S3 record failed on the SQS path. The failed SQS message is now reported as a batch item failure #490
 - Fixed the Security Lake parser raising ValueError when category_uid is missing or empty. It is now derived from class_uid #490
 - Clarified the required visibility timeout of the Security Lake subscriber queue in the docs #490
+- Fix the existing flake8 findings in es_loader/siem/__init__.py, ioc_database/lambda_function.py and cdk/mysiem/aos_deployment.py (#501)
 
 ## [2.10.6] - 2026-08-17
 ### Changed

@@ -7,6 +7,8 @@ __license__ = 'MIT-0'
 __author__ = 'Akihiro Nakajima'
 __url__ = 'https://github.com/aws-samples/siem-on-amazon-opensearch-service'
 
+import os
+
 import aws_cdk as cdk
 import boto3
 from aws_cdk import (
@@ -186,7 +188,20 @@ def get_subnets(context):
     return subnets
 
 
+def is_offline_synth():
+    """True if synthesizing without AWS API calls (for CI).
+
+    Set the environment variable AES_SIEM_CDK_OFFLINE=true to skip the IAM
+    and Lambda lookups below. The result is a valid template, but it always
+    assumes that the service-linked role does not exist and the Lambda
+    version is new. Do not use it to deploy.
+    """
+    return os.getenv('AES_SIEM_CDK_OFFLINE', '').lower() in ('1', 'true')
+
+
 def check_iam_role(pathprefix):
+    if is_offline_synth():
+        return False
     role_iterator = iam_client.list_roles(PathPrefix=pathprefix, MaxItems=2)
     if len(role_iterator['Roles']) == 1:
         return True
@@ -195,6 +210,8 @@ def check_iam_role(pathprefix):
 
 
 def same_lambda_func_version(func_name):
+    if is_offline_synth():
+        return False
     try:
         response = lambda_client.list_versions_by_function(
             FunctionName=func_name)
