@@ -9,6 +9,7 @@ __url__ = 'https://github.com/aws-samples/siem-on-amazon-opensearch-service'
 
 import configparser
 import csv
+import hashlib
 import importlib
 import ipaddress
 import json
@@ -312,6 +313,19 @@ def get_timestr_from_logdata_dict(logdata_dict, timestamp_key, has_nanotime):
             microsec = m.group(2)[:9].ljust(9, '0')
             timestr = m.group(1) + microsec + m.group(3)
     return timestr
+
+
+MAX_DOC_ID_BYTES = 512
+
+
+def limit_doc_id(doc_id):
+    """OpenSearch 3.x rejects document IDs longer than 512 bytes in every
+    API including bulk. Replace a longer ID by its MD5 hash."""
+    doc_id = str(doc_id)
+    if len(doc_id.encode('utf-8')) <= MAX_DOC_ID_BYTES:
+        return doc_id
+    # confirmd and ignored Rule-143469
+    return hashlib.md5(doc_id.encode('utf-8')).hexdigest()
 
 
 def normalize_field_name(name):

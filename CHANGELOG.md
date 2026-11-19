@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Network Firewall: TLS inspection events (TLS errors and certificate revocation checks) are loaded with `event.module` set to `tls` (#503)
 - CloudTrail: sign-in events of the console and IAM Identity Center get `event.category` `authentication`, and a failed `ConsoleLogin` gets `event.outcome` `failure` (#503)
 - Per log type settings to control what is indexed, all off by default: `mask_fields` / `mask_method` / `mask_salt` (field masking with hash, redact, partial or ip_truncate), `sampling_percent` (deterministic sampling) and `index_enabled` (keep a log type in S3 only) (#504)
+- docs/opensearch3_compatibility.md lists the result of the OpenSearch 3.x compatibility check, the open items to confirm on a 3.x domain, and static tests that guard the removed settings (#477)
 
 ### Changed
 - Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495
@@ -55,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the Security Lake parser raising ValueError when category_uid is missing or empty. It is now derived from class_uid #490
 - Clarified the required visibility timeout of the Security Lake subscriber queue in the docs #490
 - Fix the existing flake8 findings in es_loader/siem/__init__.py, ioc_database/lambda_function.py and cdk/mysiem/aos_deployment.py (#501)
+- Document IDs longer than 512 bytes are replaced by their MD5 hash, because OpenSearch 3.x rejects them in the bulk API (#477)
 
 ## [2.10.6] - 2026-08-17
 ### Changed
