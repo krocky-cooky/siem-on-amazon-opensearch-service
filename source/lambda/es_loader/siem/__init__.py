@@ -13,6 +13,7 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import zipfile
 from datetime import datetime, timedelta, timezone
 from functools import cached_property
@@ -20,7 +21,7 @@ from typing import Tuple
 
 from aws_lambda_powertools import Logger
 
-from siem import user_agent, utils
+from siem import masking, user_agent, utils
 from siem.fileformat_base import FileFormatBase
 from siem.fileformat_cef import FileFormatCef
 from siem.fileformat_csv import FileFormatCsv
@@ -587,6 +588,10 @@ class LogParser:
         self.add_field_prefix()
         # exclude logs by conditional expressions in Parameter Store
         self.exclude_logs_by_conditions()
+        # keep logs in S3 only, or sample logs
+        self.apply_indexing_policy()
+        # mask fields as the last step so that enrichment uses real values
+        self.mask_fields()
 
     ###########################################################################
     # Property
@@ -1006,6 +1011,33 @@ class LogParser:
                     del self.__logdata_dict[field]
                 except KeyError:
                     pass
+
+    def apply_indexing_policy(self):
+        if self.__logdata_dict.get('is_ignored'):
+            return
+        if self.logconfig.get('index_enabled') is False:
+            self.__logdata_dict['is_ignored'] = True
+            self.__logdata_dict['ignored_reason'] = (
+                f'index_enabled is False for {self.logtype}. '
+                f'The log is kept in S3 only')
+            return
+        percent = self.logconfig.get('sampling_percent')
+        if percent is None or percent >= 100:
+            return
+        if not masking.is_sampled(self.__logdata_dict.get('@id'), percent):
+            self.__logdata_dict['is_ignored'] = True
+            self.__logdata_dict['ignored_reason'] = (
+                f'not selected by sampling_percent {percent} '
+                f'for {self.logtype}')
+
+    def mask_fields(self):
+        specs = self.logconfig.get('mask_fields')
+        if not specs or self.__logdata_dict.get('is_ignored'):
+            return
+        salt = (self.logconfig.get('mask_salt')
+                or os.environ.get('MASK_SALT', ''))
+        method = self.logconfig.get('mask_method') or 'hash'
+        masking.mask_record(self.__logdata_dict, specs, method, salt)
 
     def exclude_logs_by_conditions(self):
         if 'exclusion_conditions' not in self.logconfig:
