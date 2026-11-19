@@ -1118,6 +1118,7 @@ class LogParser:
             elif isinstance(value, type(None)):
                 del d[key]
         return d
+
     def truncate_txt(self, txt, num):
         try:
             return txt.encode('utf-8')[:num].decode()

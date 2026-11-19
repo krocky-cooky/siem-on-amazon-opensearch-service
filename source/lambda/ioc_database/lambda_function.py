@@ -403,7 +403,7 @@ def _put_db_to_s3(conn, cur):
     db_size = os.path.getsize(DB_FILE_LOCAL)
     if db_size >= (MAX_DB_SIZE_MB * 1024 * 1024):
         raise Exception(
-            f'The IoC database is too large at {db_size/1024/1024} MB.'
+            f'The IoC database is too large at {db_size / 1024 / 1024} MB.'
             f'The file size must be {MAX_DB_SIZE_MB} MB or less.')
     # with open(DB_FILE_LOCAL, 'rb') as f_in:
     #    with gzip.open(f'{DB_FILE_LOCAL}.gz', 'wb', compresslevel=9) as f_out:
@@ -1022,7 +1022,7 @@ def createdb(event, context):
     ioc_type_dict, ioc_db_size = _put_db_to_s3(conn, cur)
     result = {'status': 200, 'ioc_provider': provider,
               'ioc_type': ioc_type_dict,
-              'ioc_db_size': f'{ioc_db_size/1024/1024} MB'}
+              'ioc_db_size': f'{ioc_db_size / 1024 / 1024} MB'}
     logger.info(json.dumps(result))
     logger.info('Finished creating database')
     return result
