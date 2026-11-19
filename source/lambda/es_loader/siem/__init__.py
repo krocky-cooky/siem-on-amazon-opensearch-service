@@ -626,13 +626,15 @@ class LogParser:
             # this field is added by sf_ script
             temp = self.__logdata_dict['__doc_id_suffix']
             del self.__logdata_dict['__doc_id_suffix']
-            return '{0}_{1}'.format(self.__logdata_dict['@id'], temp)
+            return utils.limit_doc_id(
+                '{0}_{1}'.format(self.__logdata_dict['@id'], temp))
         if self.logconfig['doc_id_suffix']:
             suffix = utils.value_from_nesteddict_by_dottedkey(
                 self.__logdata_dict, self.logconfig['doc_id_suffix'])
             if suffix:
-                return '{0}_{1}'.format(self.__logdata_dict['@id'], suffix)
-        return self.__logdata_dict['@id']
+                return utils.limit_doc_id(
+                    '{0}_{1}'.format(self.__logdata_dict['@id'], suffix))
+        return utils.limit_doc_id(self.__logdata_dict['@id'])
 
     @property
     def indexname(self):
