@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a guide for OpenSearch Serverless NextGen time series collections to docs/serverless.md #493
 - Inspector: map CODE_VULNERABILITY findings (rule.id, file.name/path, CWE as vulnerability.id, reference URLs, code location fields in the index template) (#497)
 - OpenSearch Serverless NextGen: optional parameters `NextGenIndexRetentionDays` and `NextGenIndexWarmAfterDays` add `index.data.retention` and `index.warm.after` to the index templates (#500)
+- CloudFront standard logging (v2): new log type `cloudfront-v2` for W3C, JSON and Parquet logs with selectable fields. Field names are normalized (`cs(User-Agent)` to `cs_user_agent`) by the new `normalize_field_names` option (#502)
+- CloudTrail network activity events (`eventCategory` is `NetworkActivity`) are stored in the `log-aws-cloudtrail-networkactivity` index with `event.category` set to `network` (#502)
+- WAF: label names are stored in `waf_labels`, and a CAPTCHA / Challenge `failureReason` is mapped to `event.reason` with `event.outcome` set to `failure` (#502)
 
 ### Changed
 - Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495

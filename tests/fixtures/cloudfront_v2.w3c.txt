@@ -1,0 +1,2 @@
+#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query x-host-header cs-protocol cs-protocol-version c-port timestamp(ms)
+2024-11-14	22:30:25	SOF50-P2	512	203.0.113.20	GET	d111111abcdef8.cloudfront.net	/a.png	200	-	curl/8.0	x=1	www.example.com	https	HTTP/2.0	40000	1731623425421

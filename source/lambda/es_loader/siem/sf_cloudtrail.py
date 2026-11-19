@@ -105,6 +105,11 @@ def extract_instance_id(logdata):
 
 
 def transform(logdata):
+    if logdata.get('eventCategory') == 'NetworkActivity':
+        # network activity events for VPC endpoints (eventType AwsVpceEvent)
+        # are stored in a separate index because of the volume and fields
+        logdata['__index_name'] = 'log-aws-cloudtrail-networkactivity'
+        logdata['event']['category'] = ['network']
     if 'errorCode' in logdata or 'errorMessage' in logdata:
         logdata['event']['outcome'] = 'failure'
     else:

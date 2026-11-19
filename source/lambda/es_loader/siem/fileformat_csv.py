@@ -12,7 +12,7 @@ from functools import cached_property
 
 from aws_lambda_powertools import Logger
 
-from siem import FileFormatBase
+from siem import FileFormatBase, utils
 
 logger = Logger(child=True)
 
@@ -23,6 +23,9 @@ class FileFormatCsv(FileFormatBase):
     def __init__(self, rawdata=None, logconfig=None, logtype=None):
         super().__init__(rawdata, logconfig, logtype)
         self.csv_delimiter = logconfig['csv_delimiter']
+        if self.csv_delimiter == '\\t':
+            # a tab can not be written in aws.ini/user.ini as it is stripped
+            self.csv_delimiter = '\t'
 
     @cached_property
     def log_count(self):
@@ -57,6 +60,11 @@ class FileFormatCsv(FileFormatBase):
                 break
         else:
             header = self.rawdata.readlines()[0].strip().split()
+        if header and header[0].startswith('#Fields:'):
+            # W3C style header. e.g. CloudFront standard logging (v2).
+            # field names are separated by spaces even if data is not
+            header = ' '.join(header).split()[1:]
+            return [utils.normalize_field_name(field) for field in header]
         header = [field.replace('-', '_') for field in header]
         return header
 

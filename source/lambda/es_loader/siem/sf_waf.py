@@ -24,6 +24,18 @@ def transform(logdata):
                 logdata['http']['request']['referrer'] = header['value']
             elif key == 'authorization':
                 del logdata['httpRequest']['header'][key]
+    labels = logdata.get('labels')
+    if isinstance(labels, list):
+        names = [x['name'] for x in labels
+                 if isinstance(x, dict) and x.get('name')]
+        if names:
+            logdata['waf_labels'] = names
+    for key in ('captchaResponse', 'challengeResponse'):
+        response = logdata.get(key)
+        if isinstance(response, dict) and response.get('failureReason'):
+            logdata['event']['reason'] = response['failureReason']
+            logdata['event']['outcome'] = 'failure'
+            break
     try:
         # WAFv2
         logdata['rule']['ruleset'] = logdata['webaclId'].split('/')[2]
