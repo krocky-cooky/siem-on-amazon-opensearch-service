@@ -268,6 +268,24 @@ class MyAesSiemStack(cdk.Stack):
                          'Serverless is experimental option'),
             default='opensearch_managed_cluster')
 
+        nextgen_retention_days = cdk.CfnParameter(
+            self, 'NextGenIndexRetentionDays',
+            allowed_pattern=r'^([0-9]{1,4}|)$',
+            description=('(Optional) Data retention in days (1-3650) set to '
+                         'index templates. Only used when the OpenSearch '
+                         'Serverless collection is NextGen. Empty means no '
+                         'automatic deletion'),
+            default='')
+
+        nextgen_warm_after_days = cdk.CfnParameter(
+            self, 'NextGenIndexWarmAfterDays',
+            allowed_pattern=r'^([0-9]{1,4}|)$',
+            description=('(Optional) Days after which data moves to the '
+                         'warm tier (1 or more, up to the retention). Only '
+                         'used when the OpenSearch Serverless collection is '
+                         'NextGen. Empty means the service default'),
+            default='')
+
         domain_or_collection_name = cdk.CfnParameter(
             self, 'DomainOrCollectionName', allowed_pattern=r'^[0-9a-zA-Z_-]*',
             description=('Amazon OpenSearch Service Domain name '
@@ -464,6 +482,8 @@ class MyAesSiemStack(cdk.Stack):
                     {'Label': {'default': 'Basic Configuration'},
                      'Parameters': [deployment_target.logical_id,
                                     domain_or_collection_name.logical_id,
+                                    nextgen_retention_days.logical_id,
+                                    nextgen_warm_after_days.logical_id,
                                     sns_email.logical_id,
                                     reserved_concurrency.logical_id]},
                     {'Label': {'default': 'Log Enrichment - optional'},
@@ -499,6 +519,8 @@ class MyAesSiemStack(cdk.Stack):
 
         cfn_parameters_dict = {
             'deployment_target': deployment_target,
+            'nextgen_retention_days': nextgen_retention_days,
+            'nextgen_warm_after_days': nextgen_warm_after_days,
             'domain_or_collection_name': domain_or_collection_name,
             'vpce_id': vpce_id,
             'allow_source_address': allow_source_address,

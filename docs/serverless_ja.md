@@ -66,7 +66,8 @@ Classic との主な違い
 |データの保持期間|データライフサイクルポリシー|index 設定の `index.data.retention`|
 
 * SIEM は ID を付けずに書き込み、すべてのログに `@timestamp` を付けます
-* NextGen ではダッシュボードは自動でインポートされません
+* NextGen ではダッシュボードは自動でインポートされません。設定処理はインポートをスキップし、ログにメッセージを出力します
+* `NextGenIndexRetentionDays` (1-3650) を指定すると index テンプレートに `index.data.retention` を、`NextGenIndexWarmAfterDays` (1 以上、保持期間以下) を指定すると `index.warm.after` を追加します。どちらも初期値は空で、エンドポイントが NextGen の場合のみ使われます
 * NextGen で VPC 内からアクセスするには標準の VPC エンドポイント (`com.amazonaws.<region>.aoss-data`) を使います。パラメーター `VpcEndpointId` はまだ対応していないため、パブリックのコレクションをご利用ください
 
 詳細は [コレクションの作成](https://docs.aws.amazon.com/ja_jp/opensearch-service/latest/developerguide/serverless-create.html) と [コレクションエンドポイント](https://docs.aws.amazon.com/ja_jp/opensearch-service/latest/developerguide/serverless-collection-endpoints.html) をご参照ください

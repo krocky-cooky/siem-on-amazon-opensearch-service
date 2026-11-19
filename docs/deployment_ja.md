@@ -178,6 +178,8 @@ CloudFormation テンプレートと同じパラーメーターを指定して C
 | **Basic Configuration** ||
 | DeploymentTarget | SIEM ソリューションをどこにインストールしますか？ 値は、`opensearch_managed_cluster` (初期値) か `opensearch_serverless` です。**Serverless は実験的オプションです**|
 | DomainOrCollectionName | Amazon OpenSearch Service のドメイン名、または OpenSearch Serverless のコレクション名|
+| NextGenIndexRetentionDays | (任意) index テンプレートに追加するデータ保持日数 (1-3650)。OpenSearch Serverless NextGen の場合のみ使われます |
+| NextGenIndexWarmAfterDays | (任意) ウォーム層に移すまでの日数 (1 以上、保持期間以下)。OpenSearch Serverless NextGen の場合のみ使われます |
 | SnsEmail |メールアドレス。SIEM on OpenSearch Service で検知したアラートを SNS 経由で送信する|
 | ReservedConcurrency |es-loaderの同時実行数の上限値。デフォルトは `10`。エラーがないにもかかわらずログ取り込み遅延やThrottleが常時発生する場合はこの値を増やしてください|
 | **Log Enrichment - optional** ||

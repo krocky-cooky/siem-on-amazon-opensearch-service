@@ -68,7 +68,8 @@ Main differences from Classic
 |Data retention|Data lifecycle policies|Index setting `index.data.retention`|
 
 * The SIEM writes documents without an ID and sets `@timestamp` on every log
-* Dashboards are not imported automatically on NextGen
+* Dashboards are not imported automatically on NextGen. The configuration step skips the import and writes a log message
+* Set `NextGenIndexRetentionDays` (1-3650) to add `index.data.retention` to the index templates, and `NextGenIndexWarmAfterDays` (1 or more, up to the retention) to add `index.warm.after`. Both are empty by default, and are used only when the endpoint is NextGen
 * NextGen uses a standard VPC endpoint (`com.amazonaws.<region>.aoss-data`) for access from within a VPC. The `VpcEndpointId` parameter does not support it yet, so use a public collection
 
 For details, see [Creating collections](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-create.html) and [Collection endpoints](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-collection-endpoints.html).
