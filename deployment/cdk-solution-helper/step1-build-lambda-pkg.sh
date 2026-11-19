@@ -192,6 +192,11 @@ echo 'rm -f deploy_es/dashboard.ndjson.zip'
 rm -f deploy_es/dashboard.ndjson.zip
 echo 'zip deploy_es/dashboard.ndjson.zip -jD ../saved_objects/dashboard.ndjson'
 zip deploy_es/dashboard.ndjson.zip -jD ../saved_objects/dashboard.ndjson
+# saved objects exported from OpenSearch Dashboards 3.x (optional)
+if [ -f ../saved_objects/dashboard.3.x.ndjson ]; then
+    echo 'zip deploy_es/dashboard.ndjson.zip -jD ../saved_objects/dashboard.3.x.ndjson'
+    zip deploy_es/dashboard.ndjson.zip -jD ../saved_objects/dashboard.3.x.ndjson
+fi
 
 rm -f deploy_es/dashboard.serverless.zip
 cd ../saved_objects && echo "${PWD}"

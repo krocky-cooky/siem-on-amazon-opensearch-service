@@ -40,6 +40,7 @@ class AosDeployment(object):
         self.aos_subnet_ids_raw = aos_subnet_ids_raw
 
         self.deployment_target = cfn_parameters_dict['deployment_target']
+        self.engine_version = cfn_parameters_dict['engine_version']
         self.nextgen_retention_days = (
             cfn_parameters_dict['nextgen_retention_days'])
         self.nextgen_warm_after_days = (
@@ -307,6 +308,7 @@ class AosDeployment(object):
             environment={
                 'ACCOUNT_ID': cdk.Aws.ACCOUNT_ID,
                 'DEPLOYMENT_TARGET': self.deployment_target.value_as_string,
+                'ENGINE_VERSION': self.engine_version.value_as_string,
                 'DOMAIN_OR_COLLECTION_NAME': (
                     self.domain_or_collection_name.value_as_string),
                 'S3_SNAPSHOT': self.s3_snapshot.bucket_name,

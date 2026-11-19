@@ -27,6 +27,7 @@ import requests
 from crhelper import CfnResource
 from opensearchpy import AWSV4SignerAuth
 
+import compat
 import nextgen
 from aoss import MyAoss
 
@@ -167,7 +168,8 @@ access_policies_json = json.dumps(access_policies)
 
 config_domain = {
     'DomainName': AOS_DOMAIN,
-    'EngineVersion': 'OpenSearch_2.19',
+    'EngineVersion': compat.get_engine_version(
+        os.getenv('ENGINE_VERSION')),
     'ClusterConfig': {
         'InstanceType': 't3.medium.search',
         'InstanceCount': 1,
@@ -234,6 +236,8 @@ config_domain = {
         }
     }
 }
+config_domain['AdvancedOptions'] = compat.advanced_options_for(
+    config_domain['EngineVersion'], config_domain['AdvancedOptions'])
 if AOS_SUBNET_IDS:
     config_domain['VPCOptions'] = {'SubnetIds': [AOS_SUBNET_IDS.split(',')[0]],
                                    'SecurityGroupIds': [AOS_SECURITY_GROUP_ID]}
@@ -800,7 +804,12 @@ def import_saved_objects_into_aos(dist_name, auth, cookies):
     if AOS_SERVICE == 'es':
         with ZipFile('dashboard.ndjson.zip') as new_dashboard_zip:
             new_dashboard_zip.extractall('/tmp/')
-        if os.path.exists('/tmp/dashboard.ndjson'):
+            zip_names = new_dashboard_zip.namelist()
+        saved_objects_file = compat.select_saved_objects_file(
+            zip_names, _get_dashboards_version(dist_name, auth, cookies),
+            dist_name)
+        logger.info(f'saved objects file: {saved_objects_file}')
+        if os.path.exists(f'/tmp/{saved_objects_file}'):
             # The saved objects file contains version-pinned "config" objects
             # (Advanced Settings). The OpenSearch Dashboards 3.x
             # saved_objects/_import API rejects them with "unsupported_type",
@@ -809,7 +818,7 @@ def import_saved_objects_into_aos(dist_name, auth, cookies):
             # settings can be applied through the Advanced Settings API
             # afterwards (see apply_dashboards_config_settings).
             config_objects = []
-            with open('/tmp/dashboard.ndjson', encoding='utf-8') as fd:
+            with open(f'/tmp/{saved_objects_file}', encoding='utf-8') as fd:
                 lines = []
                 for line in fd:
                     if not line.strip():
@@ -1309,6 +1318,11 @@ def aes_config_create_update(event, context):
         raise Exception(f'Your domain version is Amazon ES {domain_version}. '
                         f'Please upgrade the domain to OpenSearch or '
                         f'Amazon ES v7.10')
+
+    if dist_name == 'opensearch' and AOS_SERVICE == 'es':
+        # use the names of OpenSearch instead of the legacy opendistro names
+        compat.rename_legacy_settings(es_app_data['index-rollover'])
+        compat.rename_legacy_settings(es_app_data['cluster-settings'])
 
     configure_opensearch(dist_name, es_app_data)
     configure_siem(dist_name, es_app_data)

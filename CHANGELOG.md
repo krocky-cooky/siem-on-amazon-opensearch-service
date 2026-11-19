@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CloudTrail: sign-in events of the console and IAM Identity Center get `event.category` `authentication`, and a failed `ConsoleLogin` gets `event.outcome` `failure` (#503)
 - Per log type settings to control what is indexed, all off by default: `mask_fields` / `mask_method` / `mask_salt` (field masking with hash, redact, partial or ip_truncate), `sampling_percent` (deterministic sampling) and `index_enabled` (keep a log type in S3 only) (#504)
 - docs/opensearch3_compatibility.md lists the result of the OpenSearch 3.x compatibility check, the open items to confirm on a 3.x domain, and static tests that guard the removed settings (#477)
+- Parameter `EngineVersion` for the engine version of a new Amazon OpenSearch Service domain (#505)
+- The saved objects import selects `dashboard.3.x.ndjson` for OpenSearch Dashboards 3.x when it is in the package, and falls back to `dashboard.ndjson` (#505)
 
 ### Changed
 - Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495
@@ -43,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the batch size of the event source mapping for the Security Lake subscriber queue from 10 (default) to 1. A timeout while loading large Parquet objects no longer returns the objects that were already loaded to the queue #490
 - OpenSearch Serverless NextGen: the configuration step skips the OpenSearch Dashboards import and logs a pointer to OpenSearch UI, instead of calling endpoints that do not exist (#500)
 - CI: flake8 runs on all Python files, and a new job runs cdk synth without AWS credentials (AES_SIEM_CDK_OFFLINE=true) and lints the synthesized template with cfn-lint (#501)
+- **Default engine version of a new domain is now `OpenSearch_3.5` (was `OpenSearch_2.19`).** An existing domain is not upgraded. Set `EngineVersion` to `OpenSearch_2.19` to keep the previous default (#505)
+- The deployment uses `plugins.index_state_management.rollover_alias` and `plugins.alerting.alert_history_*` instead of the legacy `opendistro.*` names for OpenSearch domains, and does not set the advanced option `override_main_response_version` for 3.x domains (#505)
 
 ### Fixed
 - Fixed Security Lake v2 (Apache Iceberg) data files not being loaded because their file names did not match s3_key. Parquet files in aws-security-data-lake-\* buckets are now treated as Security Lake logs and Iceberg metadata files are ignored #496

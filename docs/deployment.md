@@ -184,6 +184,7 @@ You can specify the same parameters as for the CloudFormation template. The para
 | **Basic Configuration** ||
 | DeploymentTarget | Where would you like to deploy the SIEM solution? Value is  `opensearch_managed_cluster`(default) or `opensearch_serverless`. **Serverless is experimental option**|
 | DomainOrCollectionName | Amazon OpenSearch Service Domain name or OpenSearch Serverless Collection name|
+| EngineVersion | Engine version of a **new** Amazon OpenSearch Service domain. The default is `OpenSearch_3.5` (it was `OpenSearch_2.19`). An existing domain is not upgraded. Use `OpenSearch_2.19` to keep the previous version for a new domain |
 | NextGenIndexRetentionDays | (Optional) Data retention in days (1-3650) added to index templates. Used only for OpenSearch Serverless NextGen |
 | NextGenIndexWarmAfterDays | (Optional) Days until data moves to the warm tier (1 or more, up to the retention). Used only for OpenSearch Serverless NextGen |
 | SnsEmail | Email address. Alerts detected by SIEM on OpenSearch Service will be sent to this email address via SNS |
