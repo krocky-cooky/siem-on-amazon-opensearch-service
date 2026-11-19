@@ -150,17 +150,17 @@ def create_logconfig(logtype):
     type_re = ['s3_key_ignored', 'log_pattern', 'multiline_firstline',
                'xml_firstline', 'file_timestamp_format']
     type_int = ['max_log_count', 'text_header_line_number',
-                'ignore_header_line_number']
+                'ignore_header_line_number', 'sampling_percent']
     type_bool = ['via_cwl', 'via_firelens', 'ignore_container_stderr',
                  'timestamp_nano', 'json_delimiter_optional',
-                 'normalize_field_names']
+                 'normalize_field_names', 'index_enabled']
     type_list = ['base.tags', 'clientip_xff', 'container.image.tag',
                  'dns.answers',
                  'dns.header_flags', 'dns.resolved_ip', 'dns.type',
                  'ecs', 'static_ecs',
                  'event.category', 'event.type', 'file.attributes',
                  'host.ip', 'host.mac',
-                 'ioc_domain', 'ioc_ip',
+                 'ioc_domain', 'ioc_ip', 'mask_fields',
                  'observer.ip', 'observer.mac',
                  'process.args', 'registry.data.strings',
                  'related.hash', 'related.hosts', 'related.ip', 'related.user',

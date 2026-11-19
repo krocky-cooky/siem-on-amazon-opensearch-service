@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `vended-generic` log type as a generic intake for CloudWatch vended logs in JSON or Parquet. It is disabled until `s3_key` is set in user.ini (#503)
 - Network Firewall: TLS inspection events (TLS errors and certificate revocation checks) are loaded with `event.module` set to `tls` (#503)
 - CloudTrail: sign-in events of the console and IAM Identity Center get `event.category` `authentication`, and a failed `ConsoleLogin` gets `event.outcome` `failure` (#503)
+- Per log type settings to control what is indexed, all off by default: `mask_fields` / `mask_method` / `mask_salt` (field masking with hash, redact, partial or ip_truncate), `sampling_percent` (deterministic sampling) and `index_enabled` (keep a log type in S3 only) (#504)
 
 ### Changed
 - Changed resources.data of the OCSF index template from keyword to text. It is a free-form JSON object in OCSF 1.1.0 and is now stored as JSON string. The change takes effect from the next index #495

@@ -7,6 +7,7 @@
 * [ログ取り込み方法のカスタマイズ](#ログ取り込み方法のカスタマイズ)
 * [IoC による脅威情報の付与](#ioc-による脅威情報の付与)
 * [ログ取り込みの除外設定](#ログ取り込みの除外設定)
+* [インデックスするデータの制御: マスキング、サンプリング、S3 のみ](#インデックスするデータの制御-マスキングサンプリングs3-のみ)
 * [OpenSearch Service の設定変更](#opensearch-service-の設定変更)
 * [Multi-AZ with Standby の設定](#multi-az-with-standby-の設定)
 * [AWS サービス以外のログの取り込み](#aws-サービス以外のログの取り込み)
@@ -344,6 +345,47 @@ COUNT アクションの場合、Lambda 関数 es-loader の実行ログとし�
 
 EXCLUDE アクションの場合、条件に合致したログレコードを除外して、それ以外のログレコードを OpenSearch Service へ取り込みます。
 条件式により除外されたログレコード以外のみ OpenSearch Service に取り込まれているかを OpenSearch Dashboards の Discover から確認します。
+
+## インデックスするデータの制御: マスキング、サンプリング、S3 のみ
+
+この設定は初期状態では無効です。user.ini に設定してください。`[DEFAULT]` セクションの設定は全ログタイプに、ログタイプのセクションの設定はそのログタイプにのみ適用されます。インデックスされないログは S3 バケットに残ります。
+
+| 設定 | 初期値 | 説明 |
+|---|---|---|
+| `mask_fields` | 空 | マスクするフィールドを空白区切りで指定。`user.name` や `source.ip` のように、**最終的なドキュメント**のドット区切りの名前を指定します。`field:method` で方法を指定できます。フィールドがリストの場合は全要素をマスクします |
+| `mask_method` | `hash` | `:method` を付けないフィールドの方法 |
+| `mask_salt` | 空 | `hash` の鍵。空の場合は es-loader の Lambda 環境変数 `MASK_SALT` を使います |
+| `sampling_percent` | `100` | ロードするログの割合 (%)。結果はドキュメント ID で決まるので、同じログを再処理しても同じ結果になります |
+| `index_enabled` | `True` | `False` にすると、そのログタイプは OpenSearch Service にロードしません (S3 のみ) |
+
+マスクの方法
+
+| 方法 | 結果 | 用途 |
+|---|---|---|
+| `hash` | `masked:` と HMAC-SHA256 の先頭 16 文字 | ユーザー名など、値を見せずに突き合わせたいもの |
+| `redact` | `***` | 不要な値 |
+| `partial` | 末尾 4 文字のみ残す | アカウント番号、カード番号 |
+| `ip_truncate` | IPv4 は `/24`、IPv6 は `/48` のネットワークアドレス | IP アドレスのフィールド。結果も有効な IP アドレスなので `ip` マッピングで取り込めます |
+
+CloudTrail ログタイプの例
+
+```ini
+[cloudtrail]
+mask_fields = user.name userIdentity.userName
+    user.id:redact
+    source.ip:ip_truncate
+    related.ip:ip_truncate
+    related.user
+mask_salt = change-me
+```
+
+注意事項
+
+* マスクは、正規化とエンリッチの後に実行します。GeoIP と IoC のエンリッチは元の IP アドレスで行うため、`source.geo` や `threat.*` は残ります。残したくない場合は `source.geo` のフィールドもマスクするか、エンリッチを無効にしてください
+* 指定したフィールドだけをマスクします。`related.user` や `userIdentity.userName` など、同じ値を持つ他のフィールドも指定してください。`@message` の元ログもマスクしますが、3 文字未満の値は対象外です
+* `ip` でマッピングされたフィールド (例 `source.ip`) に `hash`、`redact`、`partial` を使わないでください。OpenSearch がドキュメントを拒否します。`ip_truncate` を使ってください
+* ドキュメント ID (`@id`) はマスクの前に計算するので変わりません
+* 個人情報の保護をマスクだけに頼らないでください。OpenSearch Dashboards で結果を確認し、インデックスの閲覧権限を制限してください
 
 ## OpenSearch Service の設定変更
 

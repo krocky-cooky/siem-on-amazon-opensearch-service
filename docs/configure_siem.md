@@ -7,6 +7,7 @@
 * [Customizing the log loading method](#customizing-the-log-loading-method)
 * [Threat Information Enrichment by IoC](#threat-information-enrichment-by-ioc)
 * [Adding an exclusion to log loading](#adding-an-exclusion-to-log-loading)
+* [Controlling what is indexed: masking, sampling and S3 only](#controlling-what-is-indexed-masking-sampling-and-s3-only)
 * [Changing OpenSearch Service configuration settings](#changing-opensearch-service-configuration-settings)
 * [Changing to Multi-AZ with Standby](#changing-to-multi-az-with-standby)
 * [Loading Non-AWS services logs](#loading-non-aws-services-logs)
@@ -330,6 +331,47 @@ Below is an example of the Lambda execution log when a log record is matched by 
 
 In FILTER action, log records that match conditional expressions are excluded and other log records are ingested into the OpenSearch Service.
 You can check from OpenSearch Dashboards whether the conditional expressions are correctly excluded and only other log records are ingested into the OpenSearch Service.
+
+## Controlling what is indexed: masking, sampling and S3 only
+
+These settings are off by default. Set them in user.ini. A setting in the `[DEFAULT]` section applies to all log types, and a setting in a log type section applies to that log type only. Logs that are not indexed remain in the S3 bucket.
+
+| Setting | Default | Description |
+|---|---|---|
+| `mask_fields` | empty | Fields to mask, separated by spaces. Use dotted names of the **final document**, such as `user.name` or `source.ip`. `field:method` selects the method. If the field is a list, every element is masked |
+| `mask_method` | `hash` | Method for fields without `:method` |
+| `mask_salt` | empty | Key for `hash`. If empty, the Lambda environment variable `MASK_SALT` of es-loader is used |
+| `sampling_percent` | `100` | Percentage of logs to load. The result depends on the document ID, so the same log gets the same result when it is processed again |
+| `index_enabled` | `True` | If `False`, logs of the log type are not loaded into OpenSearch Service (S3 only) |
+
+Masking methods
+
+| Method | Result | Use for |
+|---|---|---|
+| `hash` | `masked:` and 16 hex characters of an HMAC-SHA256 | Values that you want to correlate without showing them, such as user names |
+| `redact` | `***` | Values that you never need |
+| `partial` | Only the last 4 characters are kept | Account or card numbers |
+| `ip_truncate` | IPv4 `/24`, IPv6 `/48` network address | IP address fields. The result is still a valid IP address, so the `ip` mapping keeps working |
+
+Example for the CloudTrail log type
+
+```ini
+[cloudtrail]
+mask_fields = user.name userIdentity.userName
+    user.id:redact
+    source.ip:ip_truncate
+    related.ip:ip_truncate
+    related.user
+mask_salt = change-me
+```
+
+Notes
+
+* Masking runs after the log is normalized and enriched. GeoIP and IoC enrichment use the original IP address, so `source.geo` and `threat.*` remain. If you do not want to keep them, mask `source.geo` fields too or disable the enrichment
+* A value is masked only in the fields you list. The same value in other fields, such as `related.user` and `userIdentity.userName`, must be listed too. The raw log in `@message` is also masked, except for values shorter than 3 characters
+* Do not use `hash`, `redact` or `partial` for fields mapped as `ip` (for example `source.ip`). OpenSearch rejects such documents. Use `ip_truncate`
+* The document ID (`@id`) is calculated before masking, so it does not change
+* Do not rely on masking alone to protect personal data. Check the result in OpenSearch Dashboards and limit who can read the indices
 
 ## Changing OpenSearch Service Configuration Settings
 
