@@ -379,6 +379,14 @@ The log type is determined by the default output file name using regular express
     * Cookie logging: [**Yes**]
     * Choose [**Update**] to complete the configuration
 
+#### CloudFront standard logging (v2)
+
+The SIEM loads standard logging (v2) delivered to Amazon S3 in W3C (default), JSON and Parquet format (the log type is `cloudfront-v2`). Parquet needs the Pandas Lambda layer, as for other Parquet logs.
+
+* The initial value of s3_key: `AWSLogs/<account ID>/CloudFront/` (the default path of the delivery, also with the Hive-compatible option). Paths that contain `/standard/` or `/realtime/` are loaded as the other CloudFront log types. If you set a prefix in the delivery, change `s3_key` of `[cloudfront-v2]` in user.ini
+* The fields are selectable in the delivery. Select `timestamp(ms)` or both `date` and `time`, and `c-ip` to get ECS fields. Field names such as `cs(User-Agent)` are converted to `cs_user_agent`, as in the standard logging (legacy)
+* The distribution ID is taken from the `DistributionId` field. If the field is not selected, it is taken from the S3 key
+
 #### II. CloudFront real-time logs
 
 ![cloudfront realtime to s3](images/cloudfront-realtime-to-s3.jpg)

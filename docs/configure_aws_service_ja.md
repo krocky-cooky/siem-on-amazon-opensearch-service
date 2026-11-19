@@ -398,6 +398,14 @@ s3_key の初期値: `(^|\/)[0-9A-Z]{12,14}\.20\d{2}-\d{2}-\d{2}-\d{2}.[0-9a-z]{
     * Cookie logging: [**Yes**] にします
     * [**Update**] を選択して設定完了です
 
+#### CloudFront 標準ログ (v2)
+
+Amazon S3 に配信された標準ログ (v2) を W3C (既定)、JSON、Parquet 形式で取り込めます (ログタイプは `cloudfront-v2`)。Parquet は他の Parquet ログと同様に Pandas の Lambda レイヤーが必要です。
+
+* s3_key の初期値: `AWSLogs/<アカウントID>/CloudFront/` (配信の既定パス。Hive 互換オプションも対象)。`/standard/` または `/realtime/` を含むパスは、従来の CloudFront ログタイプとして取り込まれます。配信にプレフィックスを指定した場合は、user.ini の `[cloudfront-v2]` の `s3_key` を変更してください
+* 配信でフィールドを選択できます。ECS フィールドを得るには `timestamp(ms)` または `date` と `time` の両方、および `c-ip` を選択してください。`cs(User-Agent)` などのフィールド名は、標準ログ (従来) と同様に `cs_user_agent` に変換されます
+* ディストリビューション ID は `DistributionId` フィールドから取得します。フィールドを選択していない場合は S3 キーから取得します
+
 #### II.  CloudFront リアルタイムログ
 
 ![cloudfront realtime to s3](images/cloudfront-realtime-to-s3.jpg)

@@ -190,7 +190,20 @@ class LogS3:
                     'end_number': self.end_number}
         return startmsg
 
+    def _is_w3c_fields_header(self):
+        """True if a text log starts with a #Fields: header line."""
+        try:
+            head = self.rawdata.read(8)
+            self.rawdata.seek(0)
+        except Exception:
+            return False
+        return isinstance(head, str) and head.startswith('#Fields:')
+
     def set_rawfile_instance(self):
+        if (self.file_format == 'json' and self.logconfig.get('csv_delimiter')
+                and self._is_w3c_fields_header()):
+            # CloudFront standard logging (v2) in W3C format
+            self.file_format = 'csv'
         if self.file_format == 'text':
             return FileFormatText(self.rawdata, self.logconfig, self.logtype)
         elif self.file_format == 'json':
@@ -527,6 +540,9 @@ class LogParser:
         self.lograw = lograw
         self.__logdata_dict = logdict
         self.logmeta = logmeta
+        if self.logconfig.get('normalize_field_names'):
+            logdict = utils.normalize_field_names(logdict)
+            self.__logdata_dict = logdict
         self.original_fields = set(logdict.keys())
         self.additional_id = None
         if logmeta:

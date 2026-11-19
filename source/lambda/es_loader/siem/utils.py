@@ -314,6 +314,29 @@ def get_timestr_from_logdata_dict(logdata_dict, timestamp_key, has_nanotime):
     return timestr
 
 
+def normalize_field_name(name):
+    """Normalize a W3C-style field name to a snake_case name.
+
+    e.g. cs(User-Agent) -> cs_user_agent, x-edge-location ->
+    x_edge_location, timestamp(ms) -> timestamp_ms
+    """
+    return str(name).lower().replace('(', '_').replace(')', '').replace(
+        '-', '_')
+
+
+def normalize_field_names(logdict):
+    """Return a dict whose top level keys are normalized.
+
+    If the log has both date and time, date_time is added so that the log
+    has a timestamp even when timestamp(ms) is not selected in CloudFront
+    standard logging (v2).
+    """
+    new = {normalize_field_name(k): v for k, v in logdict.items()}
+    if ('date_time' not in new and new.get('date') and new.get('time')):
+        new['date_time'] = f"{new['date']} {new['time']}"
+    return new
+
+
 def convert_timestr_to_datetime_wrapper(timestr, timestamp_key,
                                         timestamp_format, TZ):
     if type(timestamp_format) is list:
