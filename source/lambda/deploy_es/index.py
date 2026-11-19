@@ -27,6 +27,7 @@ import requests
 from crhelper import CfnResource
 from opensearchpy import AWSV4SignerAuth
 
+import nextgen
 from aoss import MyAoss
 
 print(f'version: {__version__}')
@@ -62,6 +63,8 @@ except Exception as e:
 DEPLOYMENT_TARGET = os.getenv(
     'DEPLOYMENT_TARGET', 'opensearch_managed_cluster')
 # opensearch_managed_cluster or opensearch_serverless
+NEXTGEN_INDEX_RETENTION_DAYS = os.getenv('NEXTGEN_INDEX_RETENTION_DAYS', '')
+NEXTGEN_INDEX_WARM_AFTER_DAYS = os.getenv('NEXTGEN_INDEX_WARM_AFTER_DAYS', '')
 AOS_SUBNET_IDS = os.getenv('AOS_SUBNET_IDS')
 VPCE_ID = os.getenv('VPCE_ID')
 ENDPOINT = os.getenv('ENDPOINT', '')
@@ -1291,6 +1294,14 @@ def aes_config_create_update(event, context):
         actor['process'] = {"type": "object"}
         actor['file'] = {"type": "object"}
         es_app_data['ocsf-schema-core']['actor'] = json.dumps(actor)
+        if nextgen.is_nextgen_endpoint(ENDPOINT):
+            settings = nextgen.build_index_settings(
+                NEXTGEN_INDEX_RETENTION_DAYS, NEXTGEN_INDEX_WARM_AFTER_DAYS)
+            count = nextgen.apply_index_settings(
+                es_app_data['index-templates'], settings)
+            logger.info(
+                f'NextGen index settings {settings} applied to {count} '
+                f'index templates')
 
     dist_name, domain_version = get_dist_version()
     logger.info(f'dist_name: {dist_name}, domain_version: {domain_version}')
@@ -1304,6 +1315,18 @@ def aes_config_create_update(event, context):
     configure_index_rollover(es_app_data)
 
     register_snapshot_repository()
+
+    if nextgen.is_nextgen_endpoint(ENDPOINT):
+        # NextGen collections have no OpenSearch Dashboards endpoint
+        logger.info(
+            'OpenSearch Serverless NextGen has no OpenSearch Dashboards. '
+            'Skip importing dashboards. Use OpenSearch UI '
+            '(https://docs.aws.amazon.com/opensearch-service/latest/'
+            'developerguide/application.html) to visualize the data')
+        if event and 'RequestType' in event:
+            logger.info("End create poll")
+            return physicalResourceId
+        return
 
     # Globalテナントのsaved_objects をバックアップする
     tenant = 'global'

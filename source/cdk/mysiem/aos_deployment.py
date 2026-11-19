@@ -40,6 +40,10 @@ class AosDeployment(object):
         self.aos_subnet_ids_raw = aos_subnet_ids_raw
 
         self.deployment_target = cfn_parameters_dict['deployment_target']
+        self.nextgen_retention_days = (
+            cfn_parameters_dict['nextgen_retention_days'])
+        self.nextgen_warm_after_days = (
+            cfn_parameters_dict['nextgen_warm_after_days'])
         self.domain_or_collection_name = (
             cfn_parameters_dict['domain_or_collection_name'])
         self.allow_source_address = cfn_parameters_dict['allow_source_address']
@@ -212,15 +216,15 @@ class AosDeployment(object):
                 "Rules": [
                     {
                         "Resource": [f"collection/{AOSS_COLLECTION}"],
-                        "Permission":[
+                        "Permission": [
                             "aoss:CreateCollectionItems",
                             "aoss:UpdateCollectionItems"],
-                        "ResourceType":"collection"
+                        "ResourceType": "collection"
                     },
                     {
                         "Resource": [f"index/{AOSS_COLLECTION}/*"],
                         "Permission": ["aoss:*"],
-                        "ResourceType":"index"
+                        "ResourceType": "index"
                     }
                 ]
             },
@@ -230,8 +234,8 @@ class AosDeployment(object):
                 "Rules": [
                     {
                         "Resource": ["collection/*"],
-                        "Permission":["aoss:DescribeCollectionItems"],
-                        "ResourceType":"collection"
+                        "Permission": ["aoss:DescribeCollectionItems"],
+                        "ResourceType": "collection"
                     },
                 ]
             }
@@ -259,7 +263,7 @@ class AosDeployment(object):
                         "aoss:UpdateIndex",
                         "aoss:ReadDocument",
                         "aoss:WriteDocument"],
-                        "ResourceType":"index"}
+                        "ResourceType": "index"}
                 ]
             },
             {
@@ -268,7 +272,7 @@ class AosDeployment(object):
                 "Rules": [
                     {"Resource": [f"index/{AOSS_COLLECTION}/*"],
                         "Permission": ["aoss:DescribeIndex"],
-                        "ResourceType":"index"}
+                        "ResourceType": "index"}
                 ]
             }
         ]
@@ -365,6 +369,10 @@ class AosDeployment(object):
                     self.domain_or_collection_name.value_as_string),
                 'SOLUTION_PREFIX': self.solution_prefix,
                 'ENDPOINT': endpoint,
+                'NEXTGEN_INDEX_RETENTION_DAYS': (
+                    self.nextgen_retention_days.value_as_string),
+                'NEXTGEN_INDEX_WARM_AFTER_DAYS': (
+                    self.nextgen_warm_after_days.value_as_string),
                 'S3_SNAPSHOT': self.s3_snapshot.bucket_name,
                 'ROLE_AOS_ADMIN': aes_siem_deploy_role_for_lambda.role_arn,
                 'ROLE_ES_LOADER': self.lambda_es_loader.role.role_arn,
