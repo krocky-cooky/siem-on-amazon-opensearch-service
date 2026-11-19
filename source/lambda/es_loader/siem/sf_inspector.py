@@ -37,6 +37,14 @@ def transform(logdata):
     if 'PACKAGE_VULNERABILITY' in logdata['type']:
         logdata['rule']['id'] = (
             f"PACKAGE_VULNERABILITY_{logdata['vulnerability']['id']}")
+    elif 'CODE_VULNERABILITY' in logdata['type']:
+        details = logdata.get('codeVulnerabilityDetails') or {}
+        detector_id = details.get('detectorId')
+        if detector_id:
+            logdata['rule']['id'] = f'CODE_VULNERABILITY_{detector_id}'
+        cwes = details.get('cwes')
+        if cwes and not logdata['vulnerability'].get('id'):
+            logdata['vulnerability']['id'] = cwes[0]
     elif 'NETWORK_REACHABILITY' in logdata['type']:
         details = logdata['networkReachabilityDetails']
         logdata['rule']['id'] = (
