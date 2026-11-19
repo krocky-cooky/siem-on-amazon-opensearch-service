@@ -445,6 +445,7 @@ class AosDeployment(object):
             'kibana_admin_user': aes_domain.get_att('kibanaadmin').to_string(),
             'kibana_admin_pass': aes_domain.get_att('kibanapass').to_string(),
             'deploy_role_arn': aes_siem_deploy_role_for_lambda.role_arn,
+            'aes_domain': aes_domain,
         }
 
         return result

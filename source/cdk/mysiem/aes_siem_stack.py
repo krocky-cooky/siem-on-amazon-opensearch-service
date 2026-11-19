@@ -29,6 +29,7 @@ from aws_cdk import region_info
 from constructs import Construct
 
 from .aos_deployment import AosDeployment
+from .opensearch_ui import OpenSearchUi
 from .cw_dashboard_siem import CloudWatchDashboardSiem
 from .enrichment import Enrichment
 from .helper_lambda_functions import HelperLambdaFunctions
@@ -285,6 +286,40 @@ class MyAesSiemStack(cdk.Stack):
                          'Serverless is experimental option'),
             default='opensearch_managed_cluster')
 
+        enable_opensearch_ui = cdk.CfnParameter(
+            self, 'EnableOpenSearchUi',
+            allowed_values=['true', 'false'],
+            description=('Create an OpenSearch UI application with IAM '
+                         'authentication for the managed domain. The '
+                         'endpoint of the application is reachable from the '
+                         'internet, and every request needs an IAM principal '
+                         'allowed opensearch:ApplicationAccessAll. Not used '
+                         'for OpenSearch Serverless'),
+            default='false')
+
+        opensearch_ui_name = cdk.CfnParameter(
+            self, 'OpenSearchUiName',
+            allowed_pattern=r'^[a-z][a-z0-9\-]{2,39}$',
+            description='Name of the OpenSearch UI application',
+            default='aes-siem-ui')
+
+        opensearch_ui_admin_arn = cdk.CfnParameter(
+            self, 'OpenSearchUiAdminArn',
+            allowed_pattern=(
+                r'^(arn:aws[a-z\-]*:iam::[0-9]{12}:(user|role)/.{1,200}|)$'),
+            description=('(Optional) ARN of one IAM user or role that is '
+                         'administrator of the OpenSearch UI application'),
+            default='')
+
+        opensearch_ui_source_cidrs = cdk.CfnParameter(
+            self, 'OpenSearchUiAllowedSourceCidrs',
+            allowed_pattern=r'^[0-9a-fA-F:./\s]*$',
+            description=('(Optional) Space-delimited list of CIDR blocks. If '
+                         'specified, the managed policy for OpenSearch UI '
+                         'allows sign-in only from these source IP '
+                         'addresses'),
+            default='')
+
         engine_version = cdk.CfnParameter(
             self, 'EngineVersion',
             allowed_pattern=r'^OpenSearch_[0-9]+\.[0-9]+$',
@@ -513,6 +548,11 @@ class MyAesSiemStack(cdk.Stack):
                                     nextgen_warm_after_days.logical_id,
                                     sns_email.logical_id,
                                     reserved_concurrency.logical_id]},
+                    {'Label': {'default': 'OpenSearch UI - optional'},
+                     'Parameters': [enable_opensearch_ui.logical_id,
+                                    opensearch_ui_name.logical_id,
+                                    opensearch_ui_admin_arn.logical_id,
+                                    opensearch_ui_source_cidrs.logical_id]},
                     {'Label': {'default': 'Log Enrichment - optional'},
                      'Parameters': [geoip_license_key.logical_id,
                                     trusted_proxy_list.logical_id,
@@ -547,6 +587,10 @@ class MyAesSiemStack(cdk.Stack):
         cfn_parameters_dict = {
             'deployment_target': deployment_target,
             'engine_version': engine_version,
+            'enable_opensearch_ui': enable_opensearch_ui,
+            'opensearch_ui_name': opensearch_ui_name,
+            'opensearch_ui_admin_arn': opensearch_ui_admin_arn,
+            'opensearch_ui_source_cidrs': opensearch_ui_source_cidrs,
             'nextgen_retention_days': nextgen_retention_days,
             'nextgen_warm_after_days': nextgen_warm_after_days,
             'domain_or_collection_name': domain_or_collection_name,
@@ -1392,6 +1436,11 @@ class MyAesSiemStack(cdk.Stack):
         kibana_admin_user = aos_deployment_result['kibana_admin_user']
         kibana_admin_pass = aos_deployment_result['kibana_admin_pass']
         deploy_role_arn = aos_deployment_result['deploy_role_arn']
+
+        # optional OpenSearch UI application. Disabled by default
+        OpenSearchUi(
+            self, PARTITION, cfn_parameters_dict, cfn_conditions_dict,
+            aos_deployment_result['aes_domain'], aos_domain_arn).create()
 
         lambda_es_loader.add_environment('ENDPOINT', endpoint)
         lambda_es_loader.add_environment('AOSS_TYPE', aoss_type)
