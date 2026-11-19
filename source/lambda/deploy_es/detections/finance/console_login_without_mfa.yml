@@ -1,0 +1,26 @@
+title: AWS Console Login Without MFA
+id: eae0f325-f50c-51c3-8941-ab5a754b4d3c
+status: experimental
+description: Detects a successful AWS console sign-in without multi-factor authentication
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+tags:
+    - attack.initial_access
+    - attack.t1078.004
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: signin.amazonaws.com
+        eventName: ConsoleLogin
+        responseElements.ConsoleLogin: Success
+        additionalEventData.MFAUsed: 'No'
+    filter_sso:
+        userIdentity.type: AssumedRole
+    condition: selection and not filter_sso
+falsepositives:
+    - Users who sign in through federation with MFA at the identity provider
+level: medium

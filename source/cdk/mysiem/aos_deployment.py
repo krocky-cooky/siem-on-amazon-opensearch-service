@@ -41,6 +41,9 @@ class AosDeployment(object):
 
         self.deployment_target = cfn_parameters_dict['deployment_target']
         self.engine_version = cfn_parameters_dict['engine_version']
+        self.enable_security_analytics = (
+            cfn_parameters_dict['enable_security_analytics'])
+        self.detection_packs = cfn_parameters_dict['detection_packs']
         self.nextgen_retention_days = (
             cfn_parameters_dict['nextgen_retention_days'])
         self.nextgen_warm_after_days = (
@@ -371,6 +374,9 @@ class AosDeployment(object):
                     self.domain_or_collection_name.value_as_string),
                 'SOLUTION_PREFIX': self.solution_prefix,
                 'ENDPOINT': endpoint,
+                'ENABLE_SECURITY_ANALYTICS': (
+                    self.enable_security_analytics.value_as_string),
+                'DETECTION_PACKS': self.detection_packs.value_as_string,
                 'NEXTGEN_INDEX_RETENTION_DAYS': (
                     self.nextgen_retention_days.value_as_string),
                 'NEXTGEN_INDEX_WARM_AFTER_DAYS': (

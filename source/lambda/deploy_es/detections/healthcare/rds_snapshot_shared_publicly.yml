@@ -1,0 +1,25 @@
+title: AWS RDS Snapshot Shared Publicly
+id: d18cf416-6a53-5667-a78e-2e741b8b7bef
+status: experimental
+description: Detects that an RDS or Aurora snapshot is made public. The snapshot can contain patient records
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html
+tags:
+    - attack.exfiltration
+    - attack.t1537
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: rds.amazonaws.com
+        eventName:
+            - ModifyDBSnapshotAttribute
+            - ModifyDBClusterSnapshotAttribute
+        requestParameters.valuesToAdd|contains: all
+    condition: selection
+falsepositives:
+    - Public sample data sets
+level: high

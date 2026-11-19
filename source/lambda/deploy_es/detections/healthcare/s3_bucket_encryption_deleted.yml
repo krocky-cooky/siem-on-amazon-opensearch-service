@@ -1,0 +1,22 @@
+title: AWS S3 Bucket Encryption Deleted
+id: 53fd6d93-cceb-546a-ace8-d92fc23b6217
+status: experimental
+description: Detects that default encryption is removed from an S3 bucket that can store patient records
+author: SIEM on Amazon OpenSearch Service
+date: 2026/11/01
+references:
+    - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+tags:
+    - attack.defense_evasion
+    - attack.t1562
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: s3.amazonaws.com
+        eventName: DeleteBucketEncryption
+    condition: selection
+falsepositives:
+    - Approved bucket clean-up
+level: medium
