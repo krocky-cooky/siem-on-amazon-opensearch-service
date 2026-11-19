@@ -15,8 +15,25 @@ def transform(logdata):
     except KeyError:
         pass
 
-    if logdata['event']['event_type'] == 'alert':
+    event_type = logdata['event'].get('event_type')
+    if event_type == 'alert':
         logdata['event']['kind'] = 'alert'
         logdata['event']['category'] = 'intrusion_detection'
+    elif event_type is None and (
+            'tls_error' in logdata['event']
+            or 'revocation_check' in logdata['event']):
+        # TLS events of the TLS inspection engine have no event_type
+        logdata['event']['module'] = 'tls'
+        logdata['event']['category'] = 'network'
+        logdata['event']['outcome'] = 'failure'
+        tls_error = logdata['event'].get('tls_error')
+        if tls_error:
+            logdata['event']['reason'] = (
+                tls_error if isinstance(tls_error, str)
+                else str(tls_error))
+        else:
+            check = logdata['event']['revocation_check']
+            logdata['event']['reason'] = (
+                f"certificate revocation check: {check.get('status')}")
 
     return logdata

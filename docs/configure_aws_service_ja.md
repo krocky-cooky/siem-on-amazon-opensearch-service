@@ -94,6 +94,30 @@ s3_key の初期値: `Inspector2_Finding` (Firehose の出力パスに指定)
 | 1 |[![core resource](./images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=log-exporter-core-resource&templateURL=https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-core.template) [link](https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-core.template) | 基本設定の CloudFormation。ログ転送先の S3 バケット名の取得や IAM ロールを作成します。他の AWS サービス設定で共通に使用します |
 | 2 |[![eventbridge](./images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=log-exporter-eventbridge-events&templateURL=https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-eventbridge-events.template) [link](https://aes-siem.s3.ap-northeast-1.amazonaws.com/siem-on-amazon-opensearch-service/v2.10.6/log-exporter/siem-log-exporter-eventbridge-events.template) | Firehose を作成。EventBridge を設定して Events を Firehose に配信します。Security Hub と Config Rules 共通のテンプレート。|
 
+### Amazon Bedrock, VPC Lattice, Verified Access (CloudWatch vended logs)
+
+ログを JSON (vended logs は Parquet も可) で SIEM の S3 バケットに配信します。ログタイプは S3 のパスで判別します。
+
+| サービス | ログタイプ | s3_key の初期値 | 備考 |
+|---|---|---|---|
+| Amazon Bedrock モデル呼び出しログ | `bedrock` | `BedrockModelInvocationLogs/` | プロンプトとレスポンスはテキストとして取り込みます。個人情報を含む場合があるため、インデックスの閲覧権限を確認してください |
+| Amazon VPC Lattice アクセスログ、リソースアクセスログ | `vpclattice` | `/VPCLattice/` (大文字小文字は区別しない) | |
+| AWS Verified Access ログ (OCSF) | `verifiedaccess` | `VerifiedAccess` (大文字小文字は区別しない) | 配信のログプレフィックスに `VerifiedAccess` を含めてください |
+| AWS Network Firewall TLS インスペクションログ | `networkfirewall` | `_network-firewall_` | `event_type` が無い TLS イベントは `event.module` を `tls` にして取り込みます |
+
+IAM Identity Center と AWS コンソールのサインインイベントは CloudTrail (`cloudtrail`) から取り込みます。`ConsoleLogin` や `UserAuthentication` などのサインインイベントは `event.category` に `authentication` を設定し、`ConsoleLogin` の失敗は `event.outcome` を `failure` にします。
+
+#### その他の vended logs (汎用の取り込み)
+
+Amazon Cognito ユーザープールのログなど、ログタイプが無いログには `vended-generic` ログタイプを使います。初期状態では無効です。有効にするには user.ini に S3 パスの一部を指定します。
+
+```ini
+[vended-generic]
+s3_key = AWSLogs/[0-9]{12}/MyService/
+```
+
+JSON と Parquet に対応し、`cs(User-Agent)` などのフィールド名は `cs_user_agent` に変換され、ログは `log-aws-vended-*` に保存されます。時刻は `timestamp_key_list` (`timestamp_ms`、`timestamp`、`eventtimestamp`、`starttime`、`time` など) で最初に見つかったキーから取得します。別の名前の場合は、リストに追加してください。ECS フィールドはマッピングしないため、必要な場合はこのセクションを新しいログタイプとしてコピーしてください。
+
 ### AWS CloudHSM
 
 ![CloudHSM to S3](images/log-source-cloudhsm-to-s3.svg)
