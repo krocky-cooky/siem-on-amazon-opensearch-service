@@ -179,6 +179,10 @@ CloudFormation テンプレートと同じパラーメーターを指定して C
 | DeploymentTarget | SIEM ソリューションをどこにインストールしますか？ 値は、`opensearch_managed_cluster` (初期値) か `opensearch_serverless` です。**Serverless は実験的オプションです**|
 | DomainOrCollectionName | Amazon OpenSearch Service のドメイン名、または OpenSearch Serverless のコレクション名|
 | EngineVersion | **新規**の Amazon OpenSearch Service ドメインのエンジンバージョン。初期値は `OpenSearch_3.5` です (従来は `OpenSearch_2.19`)。既存のドメインはアップグレードされません。新規ドメインで従来のバージョンを使う場合は `OpenSearch_2.19` を指定してください |
+| EnableOpenSearchUi | `false` (初期値) または `true`。マネージドドメイン用に IAM 認証の OpenSearch UI アプリケーションを作成します。アプリケーションのエンドポイントはインターネットから到達可能です (サインインは必要)。[OpenSearch UI](opensearch_ui.md) を参照してください |
+| OpenSearchUiName | アプリケーション名。初期値は `aes-siem-ui` |
+| OpenSearchUiAdminArn | (任意) アプリケーションの管理者にする IAM ユーザーまたはロールの ARN を 1 つ |
+| OpenSearchUiAllowedSourceCidrs | (任意) OpenSearch UI 用マネージドポリシーでサインインを許可する CIDR (空白区切り) |
 | NextGenIndexRetentionDays | (任意) index テンプレートに追加するデータ保持日数 (1-3650)。OpenSearch Serverless NextGen の場合のみ使われます |
 | NextGenIndexWarmAfterDays | (任意) ウォーム層に移すまでの日数 (1 以上、保持期間以下)。OpenSearch Serverless NextGen の場合のみ使われます |
 | SnsEmail |メールアドレス。SIEM on OpenSearch Service で検知したアラートを SNS 経由で送信する|

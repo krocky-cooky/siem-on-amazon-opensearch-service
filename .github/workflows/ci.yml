@@ -70,6 +70,20 @@ jobs:
         run: |
           export CDK_CONTEXT_JSON="$(python -c "import json; print(json.dumps(json.load(open('cdk.json.public.sample'))['context']))")"
           python app.py
+      - name: OpenSearch UI is opt-in
+        # The OpenSearch UI endpoint is public by default. It must stay
+        # disabled unless the user sets EnableOpenSearchUi to true.
+        run: |
+          python - <<'PYEOF'
+          import json, os
+          t = json.load(open(os.path.join(
+              os.environ['RUNNER_TEMP'], 'cdk.out', 'aes-siem.template.json')))
+          assert t['Parameters']['EnableOpenSearchUi']['Default'] == 'false'
+          for name, res in t['Resources'].items():
+              if res['Type'] == 'AWS::OpenSearchService::Application':
+                  assert res.get('Condition') == 'CreateOpenSearchUi', name
+          print('OpenSearch UI is opt-in')
+          PYEOF
       - name: cfn-lint (synthesized template)
         run: >-
           cfn-lint --ignore-checks E1161 E3031 W --non-zero-exit-code error
